@@ -47,11 +47,16 @@ Constructs contextualized text configurations and handles generative execution l
 ## 7. External Services
 Provides underlying foundation models, offering modular support for cloud-hosted environments and local processing architectures.
 * **OpenAI API:** Bridges cloud queries to proprietary models, offering support for high-fidelity generation (e.g., **GPT-4**) and industrial-grade embeddings (**OpenAI Embeddings**).
+* **Ollama API:** Manages secure, local loopback requests to run open-weight open-source architectures (e.g., **Llama 2 / Llama 3** for generation or native embeddings) entirely offline.
 
 # Chunking :
 <img width="1896" height="1045" alt="image" src="https://github.com/user-attachments/assets/7b4bda3a-b156-4c49-b62f-30b4843d011f" />
 <img width="1896" height="1045" alt="image" src="https://github.com/user-attachments/assets/cd9f4f87-12ad-4f5d-9e13-20e68689f0fd" />
 
+```
+CHUNK_SIZE: int = 1000
+CHUNK_OVERLAP: int = 200
+```
 
 ```bash
 # Backend Terminal-1
@@ -70,7 +75,5 @@ streamlit run app_ui.py
 <img width="1849" height="1045" alt="image" src="https://github.com/user-attachments/assets/f2307f51-2f88-413f-9a88-4c76eef5f77a" />
 
 
-<img width="1153" height="186" alt="image" src="https://github.com/user-attachments/assets/4ce332f5-4a42-48bb-af61-a531c1d83a1a" />
 
-* **Ollama API:** Manages secure, local loopback requests to run open-weight open-source architectures (e.g., **Llama 2 / Llama 3** for generation or native embeddings) entirely offline.
 
