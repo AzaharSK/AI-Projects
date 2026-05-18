@@ -61,7 +61,8 @@ CHUNK_OVERLAP: int = 200
 # Project-structure
 ```
 simple-rag-app/
-│
+|
+├── app_ui.py             # New: Streamlit Chat Presentation Layer
 ├── config.py             # System Configurations & Environment Variables
 ├── schemas.py            # Pydantic Core Request/Response Validation Layer
 ├── models_factory.py     # SimpleModelSelector Enterprise Implementation
