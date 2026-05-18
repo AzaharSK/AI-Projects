@@ -1,14 +1,4 @@
-<img width="1842" height="988" alt="image" src="https://github.com/user-attachments/assets/88452afc-7f22-4d62-b311-c7ef223c8353" />
-<img width="1573" height="905" alt="image" src="https://github.com/user-attachments/assets/c2878ecc-24ee-4f17-902e-45433fbbeb9f" />
-<img width="1796" height="915" alt="image" src="https://github.com/user-attachments/assets/0e1f14ef-c2f9-4188-9326-1f60fe122933" />
-
-<img width="1573" height="905" alt="image" src="https://github.com/user-attachments/assets/585f837b-5710-4c77-a634-2de5080bb74c" />
-<img width="1796" height="915" alt="image" src="https://github.com/user-attachments/assets/a8f426e2-458c-4a07-b095-b65a38e1b88d" />
-<img width="1796" height="915" alt="image" src="https://github.com/user-attachments/assets/2d710245-871b-4201-a298-9baf16c955f5" />
-<img width="1796" height="915" alt="image" src="https://github.com/user-attachments/assets/b1c1435d-bbe1-4dd6-b4fc-6d76dc9e68c5" />
-
-
-<img width="1376" height="768" alt="Gemini_Generated_Image_ck1npick1npick1n" src="https://github.com/user-attachments/assets/32af98cd-a25e-4b57-a851-4047a699e8f1" />
+<img width="4468" height="2342" alt="image" src="https://github.com/user-attachments/assets/f3c94b55-0d4f-4847-b20a-6c1a9b7e6193" />
 
 
 # RAG Architecture Specification
@@ -56,5 +46,11 @@ Constructs contextualized text configurations and handles generative execution l
 ## 7. External Services
 Provides underlying foundation models, offering modular support for cloud-hosted environments and local processing architectures.
 * **OpenAI API:** Bridges cloud queries to proprietary models, offering support for high-fidelity generation (e.g., **GPT-4**) and industrial-grade embeddings (**OpenAI Embeddings**).
+
+# Chunking :
+<img width="1896" height="1045" alt="image" src="https://github.com/user-attachments/assets/7b4bda3a-b156-4c49-b62f-30b4843d011f" />
+<img width="1896" height="1045" alt="image" src="https://github.com/user-attachments/assets/cd9f4f87-12ad-4f5d-9e13-20e68689f0fd" />
+
+
 * **Ollama API:** Manages secure, local loopback requests to run open-weight open-source architectures (e.g., **Llama 2 / Llama 3** for generation or native embeddings) entirely offline.
 
