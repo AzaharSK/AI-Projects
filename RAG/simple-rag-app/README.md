@@ -61,9 +61,15 @@ CHUNK_OVERLAP: int = 200
 ```bash
 # Backend Terminal-1
 
-cat setup.sh
-source venv/bin/activate
-python main.py
+$ cat setup.sh
+$ source venv/bin/activate
+
+$ pip install -r requirements.txt
+
+$ cat .env 
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxx
+
+$ python main.py
 ```
 
 ```bash
