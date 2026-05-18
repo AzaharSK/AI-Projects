@@ -54,7 +54,7 @@ Provides underlying foundation models, offering modular support for cloud-hosted
 
 
 ```bash
-# Backend
+# Backend Terminal-1
 
 cat setup.sh
 source venv/bin/activate
@@ -62,7 +62,7 @@ python main.py
 ```
 
 ```bash
-# Fromtend
+# Fromtend Terminal-2
 
 streamlit run app_ui.py
 ```
