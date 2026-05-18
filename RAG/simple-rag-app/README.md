@@ -8,6 +8,7 @@ Based on the system architectural diagram and technical breakdown, the custom Re
 
 ---
 
+
 ## 1. User Interface (Streamlit Web UI)
 Acts as the presentation layer, bridging user actions with the underlying RAG system engine.
 * **File Uploader:** Provides an interactive upload zone for users to ingest target PDF documents dynamically into the runtime filesystem.
@@ -57,6 +58,19 @@ Provides underlying foundation models, offering modular support for cloud-hosted
 CHUNK_SIZE: int = 1000
 CHUNK_OVERLAP: int = 200
 ```
+# Project-structure
+```
+simple-rag-app/
+│
+├── config.py             # System Configurations & Environment Variables
+├── schemas.py            # Pydantic Core Request/Response Validation Layer
+├── models_factory.py     # SimpleModelSelector Enterprise Implementation
+├── pdf_processor.py       # Custom Document Chunking & Ingestion Engine
+├── core_rag.py            # SimpleRAGSystem Orchestrator Core
+└── main.py                # FastAPI Application & REST Endpoints Routing
+```
+
+# Execution
 
 ```bash
 # Backend Terminal-1
