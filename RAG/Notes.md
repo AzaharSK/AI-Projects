@@ -8,5 +8,6 @@
 - [AstraRag](https://www.udemy.com/course/generative-ai-for-beginners-chatbots-rag-mcp-ai-agents/?couponCode=CP260518SUMMXIN#instructor-1)
 - [Travel AI Agent](https://www.udemy.com/course/build-end-to-end-genai-project-production-ready-agent-with-python/?couponCode=CP260518SUMMXIN)
 - [RAGWire](https://www.udemy.com/course/advanced-rag-build-deploy-production-genai-apps/?couponCode=CP260518SUMMXIN)
+- [React Agent graph RAG](https://www.udemy.com/course/ultimate-rag-bootcamp-using-langchainlanggraph-langsmith/?couponCode=CP260518SUMMXIN)
   
    
