@@ -1,7 +1,9 @@
 # Projects:
 
  - [AI Voice Assistance](https://www.udemy.com/course/ai-developer-bootcamp/?couponCode=CP260518SUMMXIN)
+ - [Build AI Voice Agents with ElevenLabs Agent Platform](https://www.udemy.com/course/ai-builder-with-n8n-create-agents-voice-agents/?couponCode=CP260518SUMMXIN)
  - [Building a Local AI agent (Claude code clone)](https://www.udemy.com/course/ai-developer-bootcamp/?couponCode=CP260518SUMMXIN)
+ - [Doc Rag](https://www.udemy.com/course/ultimate-rag-bootcamp-using-langchainlanggraph-langsmith/?couponCode=CP260518SUMMXIN)
  - [Google Spreadsheet AI automation](https://www.udemy.com/course/ai-developer-bootcamp/?couponCode=CP260518SUMMXIN)
 
 - [StudyPal](https://www.udemy.com/course/generative-ai-for-beginners-chatbots-rag-mcp-ai-agents/?couponCode=CP260518SUMMXIN#instructor-1)
