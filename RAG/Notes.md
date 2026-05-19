@@ -11,5 +11,6 @@
 - [Travel AI Agent](https://www.udemy.com/course/build-end-to-end-genai-project-production-ready-agent-with-python/?couponCode=CP260518SUMMXIN)
 - [RAGWire](https://www.udemy.com/course/advanced-rag-build-deploy-production-genai-apps/?couponCode=CP260518SUMMXIN)
 - [React Agent graph RAG](https://www.udemy.com/course/ultimate-rag-bootcamp-using-langchainlanggraph-langsmith/?couponCode=CP260518SUMMXIN)
-  
-   
+- [Code Review Assistance](https://cpcontents.adobe.com/apacprod/public/newlearner/newlearner_139b0f82.html?accountId=510&hostName=learningmanagerapac.adobe.com#/overviewPage?loId=4130552&loType=course)
+- [Research assistant agent ](https://cpcontents.adobe.com/apacprod/public/newlearner/newlearner_139b0f82.html?accountId=510&hostName=learningmanagerapac.adobe.com#/overviewPage?loId=4358534&loType=course)
+- [ Google AI Assistant](https://cpcontents.adobe.com/apacprod/public/newlearner/newlearner_139b0f82.html?i_qp_user_id=15383964&accountId=510&hostName=learningmanagerapac.adobe.com#/overviewPage?instanceId=4183172&loId=3703498&loType=course)
