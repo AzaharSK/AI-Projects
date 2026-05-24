@@ -16,3 +16,4 @@
 - [ Google AI Assistant](https://cpcontents.adobe.com/apacprod/public/newlearner/newlearner_139b0f82.html?i_qp_user_id=15383964&accountId=510&hostName=learningmanagerapac.adobe.com#/overviewPage?instanceId=4183172&loId=3703498&loType=course)
 - [Jira automation](https://cpcontents.adobe.com/apacprod/public/newlearner/newlearner_139b0f82.html?i_qp_user_id=15383964&accountId=510&hostName=learningmanagerapac.adobe.com#/overviewPage?instanceId=4169421&loId=3698964&loType=course)
 - [Personal AI agents](https://www.udemy.com/course/langchain-ai-agent-projects/?couponCode=CP260518SUMMXIN)
+- [AI Project deployement](https://www.udemy.com/course/complete-guide-ai-infrastructure/learn/lecture/52206887#overview)
