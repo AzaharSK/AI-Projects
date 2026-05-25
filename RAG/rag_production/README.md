@@ -3,6 +3,36 @@
 A production-grade Retrieval-Augmented Generation system built with
 **LangChain · LangGraph · FastAPI · Streamlit**.
 
+
+<img width="1791" height="980" alt="image" src="https://github.com/user-attachments/assets/c1577a7a-6bdf-4c42-856f-307eb717893f" />
+
+
+<img width="1846" height="1099" alt="image" src="https://github.com/user-attachments/assets/582ef949-dcd3-4ed6-8b58-47b95c71417e" />
+
+
+```
+POST /api/v1/ingest
+POST /api/v1/query
+
+GET /health
+GET /liveness
+GET /readiness
+GET /app-metrics
+GET /metrics
+```
+
+
+where:
+
+```
+/health → aggregate app status
+/liveness → process alive
+/readiness → vectorstore/graph initialized
+/app-metrics → your business metrics
+/metrics → Prometheus scrape endpoint
+```
+
+
 ---
 
 ## Architecture
@@ -38,6 +68,20 @@ A production-grade Retrieval-Augmented Generation system built with
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+
+```
+POST /api/v1/ingest
+       ↓
+Celery queue
+       ↓
+worker
+       ↓
+vector build
+       ↓
+status endpoint
+```
+
+
 ### Key design decisions
 
 | Decision | Rationale |
@@ -54,38 +98,85 @@ A production-grade Retrieval-Augmented Generation system built with
 ## Directory layout
 
 ```
-rag_production/
-├── api/
-│   ├── app.py                  # FastAPI factory + lifespan
-│   ├── middleware/
-│   │   └── exception_handlers.py
-│   ├── routers/
-│   │   ├── ingest_router.py
-│   │   ├── query_router.py
-│   │   └── observability_router.py
-│   └── schemas/
-│       └── schemas.py          # All Pydantic request/response models
+rag_production
+
+├── pyproject.toml                # Project metadata, dependencies, build configuration
+├── README.md                     # Setup guide, architecture, API usage
+├── requirements.txt             # Python dependency list
+├── uv.lock                      # Locked package versions for reproducible installs
+
+├── src
 │
-├── core/
-│   ├── config/settings.py      # pydantic-settings singleton
-│   ├── exceptions/errors.py    # Custom exception hierarchy
-│   └── state/rag_state.py      # LangGraph state schema
+│── main.py                      # Application entry point; starts FastAPI/services
 │
-├── services/
-│   ├── rag_orchestrator.py     # Application-level façade
-│   ├── llm/llm_service.py
-│   ├── ingestion/ingestion_service.py
-│   ├── vectorstore/vectorstore_service.py
-│   └── graph/
-│       ├── graph_service.py    # LangGraph pipeline builder
-│       └── rag_nodes.py        # retrieve_docs + generate_answer nodes
+│── api
+│   │── app.py                   # FastAPI app creation and route registration
+│   │── __init__.py              # Package initialization
+│   │
+│   ├── middleware
+│   │   ├── exception_handlers.py # Global exception handlers and error responses
+│   │   └── __init__.py
+│   │
+│   ├── routers
+│   │   ├── ingest_router.py      # API endpoints for document ingestion
+│   │   ├── observability_router.py # Health checks, metrics, monitoring endpoints
+│   │   ├── query_router.py       # RAG query/chat endpoints
+│   │   └── __init__.py
+│   │
+│   └── schemas
+│       ├── schemas.py           # Pydantic request/response models
+│       └── __init__.py
 │
-├── streamlit_app/
-│   ├── app.py                  # Streamlit UI
-│   └── api_client.py           # HTTP client for FastAPI
+├── core
+│   │── __init__.py
+│   │
+│   ├── config
+│   │   ├── settings.py          # Environment variables and app config loading
+│   │   └── __init__.py
+│   │
+│   ├── exceptions
+│   │   ├── errors.py            # Custom exception definitions
+│   │   └── __init__.py
+│   │
+│   └── state
+│       ├── rag_state.py         # Shared state object for RAG workflow
+│       └── __init__.py
 │
-├── .env.example
-└── requirements.txt
+├── services
+│   │── __init__.py
+│   │── rag_orchestrator.py      # Main coordinator connecting retrieval + LLM
+│   │
+│   ├── graph
+│   │   ├── graph_service.py     # LangGraph workflow creation/execution
+│   │   ├── rag_nodes.py         # Individual workflow nodes
+│   │   └── __init__.py
+│   │
+│   ├── ingestion
+│   │   ├── ingestion_service.py # Chunking, preprocessing and indexing logic
+│   │   └── __init__.py
+│   │
+│   ├── llm
+│   │   ├── llm_service.py       # LLM interaction abstraction
+│   │   └── __init__.py
+│   │
+│   └── vectorstore
+│       ├── vectorstore_service.py # FAISS/vector DB operations
+│       └── __init__.py
+│
+├── streamlit_app
+│   │── app.py                   # Streamlit UI entrypoint
+│   │── api_client.py            # Connects UI with backend APIs
+│   │── __init__.py
+│   │
+│   └── pages                    # Multi-page Streamlit screens
+│
+└── workers
+    ├── celery_app.py            # Background task worker configuration
+    └── __init__.py
+
+├── test
+│   └── test_redis.py            # Redis integration/unit tests
+
 ```
 
 ---
@@ -97,10 +188,10 @@ rag_production/
 cd rag_production
 
 # 2. Create a virtual environment
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 
 # 3. Install dependencies
-pip install -r requirements.txt
+uv add -r requirements.txt
 
 # 4. Configure secrets
 cp .env.example .env
