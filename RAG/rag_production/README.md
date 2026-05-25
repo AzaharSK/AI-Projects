@@ -3,10 +3,8 @@
 A production-grade Retrieval-Augmented Generation system built with
 **LangChain · LangGraph · FastAPI · Streamlit**.
 
-
+- Ref: https://in.trip.com/hotels/list?city=1355&checkin=2026/5/25&checkout=2026/05/26
 <img width="1791" height="980" alt="image" src="https://github.com/user-attachments/assets/c1577a7a-6bdf-4c42-856f-307eb717893f" />
-
-
 <img width="1846" height="1099" alt="image" src="https://github.com/user-attachments/assets/582ef949-dcd3-4ed6-8b58-47b95c71417e" />
 
 
@@ -32,8 +30,113 @@ where:
 /metrics → Prometheus scrape endpoint
 ```
 
+1. Create virtual environment
+```bash
+
+uv venv
+source .venv/bin/activate
+
+uv add fastapi uvicorn celery redis
+uv add prometheus-fastapi-instrumentator
+uv add opentelemetry-api
+uv add opentelemetry-sdk
+uv add opentelemetry-instrumentation-fastapi
+uv add opentelemetry-exporter-otlp
+uv add structlog
+uv add python-jose passlib
+uv add slowapi
+uv add httpx
+
+uv add langchain
+uv add langchain-community
+uv add langchain-openai
+uv add langgraph
+uv add faiss-cpu
+uv add pydantic
+uv add python-dotenv
 
 ---
+
+2. Start Redis
+
+Required for:
+- cache
+- Celery broker
+- task queue
+- rate limit storage
+
+Using Docker:
+```
+docker run -d --name redis -p 6379:6379 redis:7
+docker ps  // Verify
+docker start redis
+
+```
+
+
+3. Run Celery worker
+
+Terminal 2:
+
+```
+source .venv/bin/activate
+
+$ celery -A src.workers.celery_app:app worker --loglevel=info
+ 
+ -------------- celery@c623lrd90445656 v5.6.3 (recovery)
+--- ***** ----- 
+-- ******* ---- Linux-6.8.0-111-generic-x86_64-with-glibc2.35 2026-05-25 13:06:19
+- 
+                
+[tasks]
+[2026-05-25 13:06:19,689: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2026-05-25 13:06:19,691: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-25 13:06:20,699: INFO/MainProcess] mingle: all alone
+[2026-05-25 13:06:20,724: INFO/MainProcess] celery@c623lrd90445656 ready.
+```
+
+4. Start Fastapi server
+Terminal 3:
+```
+uvicorn src.main:app --reload
+```
+
+5. Start streamlit UI:
+
+Terminal 4:
+
+```
+streamlit run streamlit/app.py
+```
+
+6. Enable tracing
+
+Run local Jaeger:
+```
+docker run -d \
+-p 16686:16686 \
+-p 4317:4317 \
+jaegertracing/all-in-one
+```
+
+- Open: `http://localhost:16686`
+- Once OpenTelemetry exporter config is added, traces appear automatically.
+
+-------------
+
+# For a complete production deployment later:
+
+docker compose up --build
+
+with:
+
+FastAPI container
+Redis container
+Celery worker
+Streamlit
+Prometheus
+Grafana
+Jaeger
 
 ## Architecture
 
