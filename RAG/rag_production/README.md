@@ -1,7 +1,10 @@
 # Agentic RAG — Production Refactor
 
 A production-grade Retrieval-Augmented Generation system built with
-**LangChain · LangGraph · FastAPI · Streamlit**.
+- **LangChain**
+- **LangGraph**
+- **FastAPI**
+- **Streamlit**
 
 - Ref: https://in.trip.com/hotels/list?city=1355&checkin=2026/5/25&checkout=2026/05/26
 <img width="1791" height="980" alt="image" src="https://github.com/user-attachments/assets/c1577a7a-6bdf-4c42-856f-307eb717893f" />
