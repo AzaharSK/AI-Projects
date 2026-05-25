@@ -65,6 +65,8 @@ Required for:
 - rate limit storage
 
 Using Docker:
+
+Terminal 1:
 ```bash
 docker run -d --name redis -p 6379:6379 redis:7
 docker ps  // Verify
