@@ -30,9 +30,9 @@ where:
 /metrics → Prometheus scrape endpoint
 ```
 
-1. Create virtual environment
-```bash
+## 1. Create virtual environment
 
+```bash
 uv venv
 source .venv/bin/activate
 
@@ -54,10 +54,9 @@ uv add langgraph
 uv add faiss-cpu
 uv add pydantic
 uv add python-dotenv
+```
 
----
-
-2. Start Redis
+## 2. Start Redis
 
 Required for:
 - cache
@@ -66,23 +65,22 @@ Required for:
 - rate limit storage
 
 Using Docker:
-```
+```bash
 docker run -d --name redis -p 6379:6379 redis:7
 docker ps  // Verify
 docker start redis
-
 ```
 
 
-3. Run Celery worker
+## 3. Run Celery worker
 
 Terminal 2:
 
-```
+```bash
 source .venv/bin/activate
 
 $ celery -A src.workers.celery_app:app worker --loglevel=info
- 
+
  -------------- celery@c623lrd90445656 v5.6.3 (recovery)
 --- ***** ----- 
 -- ******* ---- Linux-6.8.0-111-generic-x86_64-with-glibc2.35 2026-05-25 13:06:19
@@ -95,24 +93,23 @@ $ celery -A src.workers.celery_app:app worker --loglevel=info
 [2026-05-25 13:06:20,724: INFO/MainProcess] celery@c623lrd90445656 ready.
 ```
 
-4. Start Fastapi server
+## 4. Start Fastapi server
 Terminal 3:
-```
+```bash
 uvicorn src.main:app --reload
 ```
 
-5. Start streamlit UI:
+## 5. Start streamlit UI:
 
 Terminal 4:
-
-```
+```bash
 streamlit run streamlit/app.py
 ```
 
-6. Enable tracing
+## 6. Enable tracing
 
 Run local Jaeger:
-```
+```bash
 docker run -d \
 -p 16686:16686 \
 -p 4317:4317 \
