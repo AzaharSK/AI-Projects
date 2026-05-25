@@ -41,6 +41,7 @@ where:
 ## 1. Create virtual environment
 
 ```bash
+uv init
 uv venv
 source .venv/bin/activate
 
@@ -62,6 +63,13 @@ uv add langgraph
 uv add faiss-cpu
 uv add pydantic
 uv add python-dotenv
+
+uv pip freeze > requirements.txt
+
+
+uv add -r requirements.txt
+uv tree
+pip list
 ```
 
 ## 2. Start Redis
