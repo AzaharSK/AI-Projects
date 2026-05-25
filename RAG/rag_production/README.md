@@ -8,6 +8,11 @@ A production-grade Retrieval-Augmented Generation system built with
 <img width="1846" height="1099" alt="image" src="https://github.com/user-attachments/assets/582ef949-dcd3-4ed6-8b58-47b95c71417e" />
 
 
+
+## API 
+
+<img width="1790" height="751" alt="image" src="https://github.com/user-attachments/assets/9b398194-aa34-432e-8e53-00a95333b2ea" />
+
 ```
 POST /api/v1/ingest
 POST /api/v1/query
