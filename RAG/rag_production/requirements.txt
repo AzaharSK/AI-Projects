@@ -1,0 +1,28 @@
+# ── Core RAG ──────────────────────────────────────────────────────────────────
+langchain>=0.3.27
+langchain-community>=0.3.27
+langchain-openai>=0.3.30
+langchain-text-splitters>=0.3.0
+langgraph>=0.6.5
+openai>=1.99.9
+
+# ── Vector store ──────────────────────────────────────────────────────────────
+faiss-cpu>=1.12.0
+
+# ── Document loaders ──────────────────────────────────────────────────────────
+pypdf>=6.0.0
+beautifulsoup4>=4.13.4
+wikipedia>=1.4.0
+requests>=2.32.4
+
+# ── API ───────────────────────────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.11.7
+pydantic-settings>=2.7.0
+
+# ── Config / utilities ────────────────────────────────────────────────────────
+python-dotenv>=1.1.1
+
+# ── Streamlit UI ──────────────────────────────────────────────────────────────
+streamlit>=1.48.1
