@@ -125,17 +125,18 @@ jaegertracing/all-in-one
 
 # For a complete production deployment later:
 
+```bash
 docker compose up --build
-
+```
 with:
 
-FastAPI container
-Redis container
-Celery worker
-Streamlit
-Prometheus
-Grafana
-Jaeger
+- FastAPI container
+- Redis container
+- Celery worker
+- Streamlit
+- Prometheus
+- Grafana
+- Jaeger
 
 ## Architecture
 
