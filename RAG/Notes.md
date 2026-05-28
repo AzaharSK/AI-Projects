@@ -7,6 +7,7 @@
  - [Google Spreadsheet AI automation](https://www.udemy.com/course/ai-developer-bootcamp/?couponCode=CP260518SUMMXIN)
 
 - [StudyPal](https://www.udemy.com/course/generative-ai-for-beginners-chatbots-rag-mcp-ai-agents/?couponCode=CP260518SUMMXIN#instructor-1)
+- [Study](https://github.com/data-guru0?tab=repositories)
 - [AstraRag](https://www.udemy.com/course/generative-ai-for-beginners-chatbots-rag-mcp-ai-agents/?couponCode=CP260518SUMMXIN#instructor-1)
 - [Travel AI Agent](https://www.udemy.com/course/build-end-to-end-genai-project-production-ready-agent-with-python/?couponCode=CP260518SUMMXIN)
 - [RAGWire](https://www.udemy.com/course/advanced-rag-build-deploy-production-genai-apps/?couponCode=CP260518SUMMXIN)
