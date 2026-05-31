@@ -83,14 +83,7 @@ docker build -t jenkins-dind .
 ### 3. Run Jenkins Container
 
 ```bash
-docker run -d ^
-  --name jenkins-dind ^
-  --privileged ^
-  -p 8080:8080 ^
-  -p 50000:50000 ^
-  -v /var/run/docker.sock:/var/run/docker.sock ^
-  -v jenkins_home:/var/jenkins_home ^
-  jenkins-dind
+docker run -d --name jenkins-dind --privileged -p 8080:8080 -p 50000:50000 -v /var/run/docker.sock:/var/run/docker.sock -v jenkins_home:/var/jenkins_home jenkins-dind
 ```
 
 > ✅ If successful, you’ll get a long alphanumeric container ID
