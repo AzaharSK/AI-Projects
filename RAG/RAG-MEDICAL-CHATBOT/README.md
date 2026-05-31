@@ -212,32 +212,32 @@ FastAPI app (app/application.py)
             └── index.faiss
 ```
 
-        Top-level files and folders:
+Top-level files and folders:
 
-        - `Dockerfile`: container build definition for app runtime with uv + Uvicorn.
-        - `Jenkinsfile`: CI/CD pipeline stages (clone, image build, scan, push, deploy).
-        - `FULL_DOCUMENTATION.md`: extended setup and deployment notes.
-        - `requirements.txt`: Python dependency list used by packaging and image builds.
-        - `setup.py`: package metadata and editable install entrypoint.
-        - `data/`: runtime data (including SQLite chat history db).
-        - `vectorstore/db_faiss/`: persisted FAISS index for RAG retrieval.
+- `Dockerfile`: container build definition for app runtime with uv + Uvicorn.
+- `Jenkinsfile`: CI/CD pipeline stages (clone, image build, scan, push, deploy).
+- `FULL_DOCUMENTATION.md`: extended setup and deployment notes.
+- `requirements.txt`: Python dependency list used by packaging and image builds.
+- `setup.py`: package metadata and editable install entrypoint.
+- `data/`: runtime data (including SQLite chat history db).
+- `vectorstore/db_faiss/`: persisted FAISS index for RAG retrieval.
 
-        Application modules:
+Application modules:
 
-        - `app/application.py`: FastAPI app entrypoint, routes, health checks, business metrics, and Prometheus endpoint.
-        - `app/schema.py`: Pydantic request/response models for API contracts.
-        - `app/database.py`: SQLite-backed chat history storage by session id.
-        - `app/observability.py`: OpenTelemetry SDK setup and FastAPI/log instrumentation.
-        - `app/common/logger.py`: common logger setup.
-        - `app/common/custom_exception.py`: custom exception utilities.
-        - `app/components/data_loader.py`: source document loading utilities.
-        - `app/components/pdf_loader.py`: PDF ingestion pipeline.
-        - `app/components/embeddings.py`: embedding model setup.
-        - `app/components/vector_store.py`: FAISS vector store load/save operations.
-        - `app/components/llm.py`: LLM client initialization (OpenAI).
-        - `app/components/retriever.py`: RAG retriever and QA chain construction.
-        - `app/config/config.py`: environment-backed configuration constants.
-        - `app/templates/index.html`: browser chat UI template.
+- `app/application.py`: FastAPI app entrypoint, routes, health checks, business metrics, and Prometheus endpoint.
+- `app/schema.py`: Pydantic request/response models for API contracts.
+- `app/database.py`: SQLite-backed chat history storage by session id.
+- `app/observability.py`: OpenTelemetry SDK setup and FastAPI/log instrumentation.
+- `app/common/logger.py`: common logger setup.
+- `app/common/custom_exception.py`: custom exception utilities.
+- `app/components/data_loader.py`: source document loading utilities.
+- `app/components/pdf_loader.py`: PDF ingestion pipeline.
+- `app/components/embeddings.py`: embedding model setup.
+- `app/components/vector_store.py`: FAISS vector store load/save operations.
+- `app/components/llm.py`: LLM client initialization (OpenAI).
+- `app/components/retriever.py`: RAG retriever and QA chain construction.
+- `app/config/config.py`: environment-backed configuration constants.
+- `app/templates/index.html`: browser chat UI template.
 
 ## Endpoints
 
