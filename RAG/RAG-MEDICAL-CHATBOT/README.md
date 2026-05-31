@@ -139,6 +139,7 @@ INFO:     172.17.0.1:52842 - "POST / HTTP/1.1" 303 See Other
 INFO:     172.17.0.1:52842 - "GET / HTTP/1.1" 200 OK
 
 ```
+<img width="1198" height="1082" alt="image" src="https://github.com/user-attachments/assets/baa2cec1-8261-447d-b3c1-a12bc62408ff" />
 
 ## What Changed
 
