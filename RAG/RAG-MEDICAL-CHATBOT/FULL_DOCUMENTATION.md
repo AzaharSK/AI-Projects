@@ -221,6 +221,14 @@ git push origin main
 
 > 🔁 If you already cloned the repo with a `Jenkinsfile` in it, you can skip creating a new one manually.
 
+## Configure Jenkins :
+<img width="1540" height="1127" alt="image" src="https://github.com/user-attachments/assets/a2a2b8c7-6110-47e0-8ecf-3b3b9529ee43" />
+
+## Build :
+<img width="1454" height="1134" alt="image" src="https://github.com/user-attachments/assets/68a3d69a-f58c-4506-b095-81b0e8b1fd29" />
+
+
+
 ## ==> 3. 🐳 Build Docker Image, Scan with Trivy, and Push to AWS ECR
 
 ### 1. Install Trivy in Jenkins Container
