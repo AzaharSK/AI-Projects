@@ -154,7 +154,7 @@ INFO:     172.17.0.1:52842 - "GET / HTTP/1.1" 200 OK
 
 ## Architecture
 
-```text
+```
 User/Web/API
    |
    v
@@ -171,9 +171,10 @@ FastAPI app (app/application.py)
                  +--> Grafana/Datadog (dashboards + alerts)
 ```
 
-        ## Project Tree and File Purpose
 
-        ```text
+## Project Tree and File Purpose
+
+```
         RAG-MEDICAL-CHATBOT/
         ├── Dockerfile
         ├── Jenkinsfile
@@ -209,7 +210,7 @@ FastAPI app (app/application.py)
         └── vectorstore/
           └── db_faiss/
             └── index.faiss
-        ```
+```
 
         Top-level files and folders:
 
