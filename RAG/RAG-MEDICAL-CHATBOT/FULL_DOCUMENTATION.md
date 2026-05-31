@@ -86,13 +86,32 @@ docker build -t jenkins-dind .
 docker run -d --name jenkins-dind --privileged -p 8080:8080 -p 50000:50000 -v /var/run/docker.sock:/var/run/docker.sock -v jenkins_home:/var/jenkins_home jenkins-dind
 ```
 ```bash
-docker stop jenkins-dind && docker rm jenkins-dind
-cd custom_jenkins && docker build --no-cache -t jenkins-dind .
-docker run -d --name jenkins-dind --privileged \
-  -p 8080:8080 -p 50000:50000 \
+
+docker stop jenkins-dind && docker rm -f jenkins-dind
+cd RAG-MEDICAL-CHATBOT/custom_jenkins
+docker build --no-cache -t jenkins-dind:jenkins .
+
+docker run -d \
+  --name jenkins-dind \
+  --privileged \
+  -p 8080:8080 \
+  -p 50000:50000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v jenkins_home:/var/jenkins_home \
-  jenkins-dind
+  -e HTTP_PROXY= -e http_proxy= \
+  -e HTTPS_PROXY= -e https_proxy= \
+  -e NO_PROXY= -e no_proxy= \
+  -e ALL_PROXY= -e all_proxy= \
+  jenkins-dind:jenkins
+
+docker exec -it jenkins-dind sh -lc 'cat /proc/1/cmdline'
+docker logs --tail 100 jenkins-dind
+
+```
+
+```bash
+cd /lhome/azahask/test/AI-Projects/RAG/RAG-MEDICAL-CHATBOT
+docker build -t rag-medical-chatbot:app .
 ```
 
 > ✅ If successful, you’ll get a long alphanumeric container ID
