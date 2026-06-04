@@ -211,3 +211,8 @@ Dashboards / APIs
                                (System Health + Cost / AI Cost)
 
 ```
+
+
+
+<img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/1a26e9d8-b11c-47b5-8b1a-431213cc66b0" />
+
