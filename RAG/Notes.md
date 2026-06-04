@@ -19,3 +19,4 @@
 - [Personal AI agents](https://www.udemy.com/course/langchain-ai-agent-projects/?couponCode=CP260518SUMMXIN)
 - [AI Project deployement](https://www.udemy.com/course/complete-guide-ai-infrastructure/learn/lecture/52206887#overview)
 - [Zomato chat bot](https://www.udemy.com/course/generative-ai-mastery/?couponCode=PMNVD2025)
+- [Fastapi-kafka-services](https://medium.com/@kishorchukka/introduction-f345491b1eb4)
