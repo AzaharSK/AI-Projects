@@ -99,6 +99,90 @@ docker compose ps
 
 <img width="1857" height="531" alt="image" src="https://github.com/user-attachments/assets/1c6d8651-5dc9-47c6-a978-6e92344765ed" />
 
+
+
+# Create dashboard : Grafana --> Dashboards --> New --> New dashboard --> Add visualization.
+
+### [1] Add Metrics panel (Prometheus)
+
+- __Select datasource:__ Prometheus
+- __Use query:__ `rate(http_requests_total[1m])`
+- __If you want per-path:__ `sum by (handler, method, status)(rate(http_requests_total[5m]))`
+- __Set visualization:__ Time series
+- __Title:__ API Request Rate
+
+### [2] Add Latency panel (Prometheus): --> New panel, datasource Prometheus
+- __Query for p95:__
+  ```
+  histogram_quantile(0.95, sum by (le)
+  (rate(http_request_duration_seconds_bucket[5m])))
+  ```
+- __Visualization:__ Time series
+- __Title:__ API P95 Latency
+
+### [3] Add Logs panel (Loki) : New panel -> datasource Loki
+- __Query:__
+
+```
+{job="fastapi-observability"}
+
+# Filter by app label
+{job="fastapi-observability", app="fastapi"}
+```
+- __Visualization:__ Logs
+- __Title:__ FastAPI Logs
+
+### [4] Add Error Logs panel (Loki) : New panel, datasource Loki
+- __Query:__ `{job="fastapi-observability"} |= "error"`
+- __Visualization:__ Logs or Time series (if you use count over time): `sum(count_over_time({job="fastapi-observability"} |= "error"[5m]))`
+
+```
+
+# Only errors
+{job="fastapi-observability"} |= "error"
+
+# Count logs per minute
+sum(count_over_time({job="fastapi-observability"}[1m]))
+
+# Error count per minute
+sum(count_over_time({job="fastapi-observability"} |= "error"[1m]))
+```
+
+
+- __Title:__ Error Logs
+
+
+### [5] Add Traces flow (Tempo)
+- Open Explore, select Tempo, search traces.
+- From a trace, use “View logs for this span” and “View metrics for this span” to link signals.
+- You can also add a TraceQL panel later if needed.
+
+```bash
+# All traces for your API service
+{ resource.service.name = "fastapi-observability-api" }
+
+# Errors only
+{ resource.service.name = "fastapi-observability-api" && status = error }
+
+# Health endpoint traces
+{ resource.service.name = "fastapi-observability-api" && span.http.target = "/health" }
+
+# Demo random endpoint traces
+{ resource.service.name = "fastapi-observability-api" && span.http.target = "/demo/random" }
+
+# Slow traces (example > 500ms)
+{ resource.service.name = "fastapi-observability-api" && duration > 500ms }
+
+```
+
+
+### [6] Save dashboard
+- Click Save dashboard, name it like `FastAPI Observability`.
+- If you want, I can give you a ready-to-paste starter dashboard JSON with 6 panels (RPS, latency, error rate, logs stream, top endpoints, trace count).
+
+
+
+
 <img width="1846" height="824" alt="image" src="https://github.com/user-attachments/assets/b17e3937-f73e-46de-aee8-7429884e572d" />
 
 
