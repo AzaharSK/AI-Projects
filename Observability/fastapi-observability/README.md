@@ -91,4 +91,14 @@ docker compose ps
 
 - Grafana datasource provisioning is preconfigured for Prometheus, Loki, and Tempo.
 - Log format is JSON and includes OpenTelemetry trace/span IDs for correlation.
+
+
+<img width="1790" height="506" alt="image" src="https://github.com/user-attachments/assets/93537d01-660d-4459-b59b-5e5af394ea54" />
+
+<img width="1758" height="128" alt="image" src="https://github.com/user-attachments/assets/7c80293d-56ff-480e-8056-fbfd0f1a30fb" />
+
+<img width="1857" height="531" alt="image" src="https://github.com/user-attachments/assets/1c6d8651-5dc9-47c6-a978-6e92344765ed" />
+
+<img width="1846" height="824" alt="image" src="https://github.com/user-attachments/assets/b17e3937-f73e-46de-aee8-7429884e572d" />
+
 - This skeleton is intentionally simple but structured to reflect production service boundaries.
