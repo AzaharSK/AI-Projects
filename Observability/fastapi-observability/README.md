@@ -101,4 +101,25 @@ docker compose ps
 
 <img width="1846" height="824" alt="image" src="https://github.com/user-attachments/assets/b17e3937-f73e-46de-aee8-7429884e572d" />
 
+
+```bash
+$ sudo apt update && sudo apt install -y apache2-utils
+
+# Great, use ApacheBench with -n for 1000 requests.
+# Recommended quick sequence:
+
+# 1. Run load test
+ab -n 1000 -c 50 http://127.0.0.1:8000/demo/random
+
+# 2. Check FastAPI target is up in Prometheus
+curl -s http://127.0.0.1:9090/api/v1/targets
+
+# 3. Check request metric value
+curl -s "http://127.0.0.1:9090/api/v1/query?query=sum(http_requests_total)"
+
+# If you want higher RPS, increase concurrency:
+ab -n 5000 -c 200 http://127.0.0.1:8000/demo/random
+
+```
+
 - This skeleton is intentionally simple but structured to reflect production service boundaries.
