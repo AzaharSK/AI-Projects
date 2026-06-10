@@ -1,0 +1,124 @@
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-observability
+    environment:
+      APP_NAME: fastapi-observability
+      APP_ENV: production
+      LOG_LEVEL: INFO
+      LOG_FILE: /var/log/fastapi-observability/app.log
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_SERVICE_NAME: fastapi-observability-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - fastapi_logs:/var/log/fastapi-observability
+    depends_on:
+      - otel-collector
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    user: "0:0"
+    command: ["-config.file=/etc/loki/config.yaml"]
+    environment:
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      ALL_PROXY: ""
+      NO_PROXY: localhost,127.0.0.1,loki,tempo,prometheus,grafana,otel-collector,fastapi
+      http_proxy: ""
+      https_proxy: ""
+      all_proxy: ""
+      no_proxy: localhost,127.0.0.1,loki,tempo,prometheus,grafana,otel-collector,fastapi
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./deploy/loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/var/lib/loki
+
+  tempo:
+    image: grafana/tempo:2.8.2
+    container_name: tempo
+    user: "0:0"
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    environment:
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      ALL_PROXY: ""
+      NO_PROXY: localhost,127.0.0.1,loki,tempo,prometheus,grafana,otel-collector,fastapi
+      http_proxy: ""
+      https_proxy: ""
+      all_proxy: ""
+      no_proxy: localhost,127.0.0.1,loki,tempo,prometheus,grafana,otel-collector,fastapi
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+    volumes:
+      - ./deploy/tempo-config.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/var/lib/tempo
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "4318:4318"
+    volumes:
+      - ./deploy/otel-collector-config-docker.yaml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus-config-docker.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - fastapi
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    command: ["-config.file=/etc/promtail/config.yaml"]
+    volumes:
+      - ./deploy/promtail-config-docker.yaml:/etc/promtail/config.yaml:ro
+      - fastapi_logs:/var/log/fastapi-observability:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      ALL_PROXY: ""
+      NO_PROXY: localhost,127.0.0.1,prometheus,loki,tempo,otel-collector,fastapi
+      http_proxy: ""
+      https_proxy: ""
+      all_proxy: ""
+      no_proxy: localhost,127.0.0.1,prometheus,loki,tempo,otel-collector,fastapi
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/observability.yaml:ro
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+
+volumes:
+  fastapi_logs:
+  loki_data:
+  tempo_data:
+  prometheus_data:
+  grafana_data:

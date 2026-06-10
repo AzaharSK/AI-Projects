@@ -1,0 +1,22 @@
+[project]
+name = "fastapi-observability"
+version = "0.1.0"
+description = "Production-style FastAPI observability skeleton with Loki, Tempo, and Grafana"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "fastapi==0.115.0",
+  "opentelemetry-api==1.27.0",
+  "opentelemetry-exporter-otlp==1.27.0",
+  "opentelemetry-instrumentation==0.48b0",
+  "opentelemetry-instrumentation-fastapi==0.48b0",
+  "opentelemetry-instrumentation-logging==0.48b0",
+  "opentelemetry-sdk==1.27.0",
+  "prometheus-fastapi-instrumentator==7.0.0",
+  "pydantic-settings==2.5.2",
+  "python-json-logger==2.0.7",
+  "setuptools==82.0.1",
+  "uvicorn[standard]==0.30.6",
+]
+
+[tool.uv]
+package = false

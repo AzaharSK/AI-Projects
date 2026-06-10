@@ -1,0 +1,22 @@
+[Unit]
+Description=FastAPI Observability Demo API
+After=network-online.target otel-collector.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fastapiobs
+Group=fastapiobs
+WorkingDirectory=/opt/fastapi-observability
+EnvironmentFile=/etc/fastapi-observability/fastapi.env
+ExecStart=/opt/fastapi-observability/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/log/fastapi-observability
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Loki Log Aggregation System
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/loki --config.file=/etc/loki/config.yaml
+Restart=always
+RestartSec=3
+User=loki
+Group=loki
+WorkingDirectory=/var/lib/loki
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

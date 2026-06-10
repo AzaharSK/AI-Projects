@@ -1,0 +1,15 @@
+[Unit]
+Description=Grafana Tempo Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/tempo --config.file=/etc/tempo/config.yaml
+Restart=always
+RestartSec=3
+User=root
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
