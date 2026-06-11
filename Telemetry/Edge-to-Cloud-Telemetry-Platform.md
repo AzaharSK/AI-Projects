@@ -311,7 +311,17 @@ Partition Key = VIN
 
 # 1M Vehicle Platform:
 
-### Vehicle Side APIs
+### Vehicle Side APIs ingestion services
+
+The ingestion service doesn't care whether the payload contains speed, battery, GPS, CPU, or connectivity data. Its job is simply:
+
+- Authenticate vehicle
+- Validate schema
+- Add metadata (receive timestamp, vehicle ID, etc.)
+- Publish to Kafka
+- Return 200 Accepted
+
+  
 ```
 POST /v1/telemetry
 POST /v1/device/status
