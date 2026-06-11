@@ -1693,9 +1693,67 @@ When a vehicle sends a command or a metric, debugging an issue across an asynchr
 
 
 
+---------------------------
 
+# Further improvement
+```
+Vehicle
+   |
+gRPC + Protobuf + mTLS
+   |
+Envoy
+   |
+Telemetry Gateway/ (Fastapi /v1/telemetry + 1 producer)
+(100 Pods)
+   |
+Async Queue
+   |
+Kafka Producer
+(enable.idempotence=true)
+   |
+Kafka (6-9 Brokers)
+   |
+Flink
+   |
+Alerts
+Analytics
+Storage
+Device Mgmt
+```
 
+- Add Local Async Queue Before Kafka
 
+Instead of:
+```
+create_task(
+   producer.send(...)
+)
+```
+- Create: `Ingress Queue`
+
+- Architecture:
+
+```
+Request
+   |
+   v
+
+asyncio.Queue
+
+   |
+Worker-1
+Worker-2
+Worker-3
+
+   |
+Kafka
+```
+
+Benefits:
+
+- Backpressure
+- Queue Metrics
+- Controlled Memory
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
