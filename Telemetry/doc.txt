@@ -1,0 +1,267 @@
+https://wiki.swf.i.mercedes-benz.com/pages/viewpage.action?pageId=70725028
+https://wiki.swf.i.mercedes-benz.com/display/APRICOT/Car+Telemetry+CarService
+https://wiki.swf.i.mercedes-benz.com/display/mbient/CarTelemateryService%3A+Exploration
+https://wiki.swf.i.mercedes-benz.com/display/~spandya/Classification+of+Data+Collection+in+AAOS
+
+
+telematic-gateway-service
+Richos
+
+
+Schema:
+https://www.w3.org/TR/viss2-core/#server-capabilities
+https://github.com/COVESA/vehicle_signal_specification/tree/master
+
+https://github.com/thatlarrypearson/vehicle-telemetry-system/
+
+https://source.android.com/docs/automotive/vhal/system-properties
+https://android.googlesource.com/platform/hardware/interfaces/+/refs/heads/android16-qpr2-release/automotive/vehicle/aidl/generated_lib/4/cpp/AnnotationsForVehicleProperty.h
+https://android.googlesource.com/platform//hardware/interfaces/+/afa170792ae6799435ce0e532365d808aa349ef6/automotive/vehicle/aidl/emu_metadata/android.hardware.automotive.vehicle-types-meta.json
+https://android.googlesource.com/platform//hardware/interfaces/+/6a5da1503331a32cd36759563efc106bf8b278be/automotive/vehicle/aidl/emu_metadata/android.hardware.automotive.vehicle-types-meta.json
+https://android.googlesource.com/platform//hardware/interfaces/+/4e10251c1d8f6925739fd9d26f347b68c1e5c6e3/automotive/vehicle/aidl/impl/default_config/config/DefaultProperties.json
+
+https://static.sched.com/hosted_files/ossalsjp21/e3/eSync_Alliance_Automotive_Linux_Summit_2021_FINAL.pdf
+
+
+Do I need aiokafka producer or consumer for this project  
+
+Concrete Use Cases:
+1. Vehicle Health Monitoring
+
+2. Fleet Management
+For:
+
+logistics trucks
+taxis
+EV fleets
+delivery vehicles
+Use cases:
+
+real-time tracking
+fuel/battery analytics
+predictive maintenance
+driver behavior analysis
+route optimization
+
+
+3. Predictive Maintenance
+AI models analyze:
+
+vibration
+heat
+fault frequency
+latency
+component degradation
+before actual failure occurs.
+
+Your platform handles:
+
+telemetry ingestion
+event streaming
+async processing
+AI model orchestration
+
+
+ OTA Update Monitoring
+Vehicles/devices send:
+
+update status
+failures
+retries
+package integrity
+rollback status
+Platform manages:
+
+failover
+retries
+logging
+monitoring
+distributed coordination
+
+
+Telemetry detects:
+
+high latency
+ECU failure
+sensor timeout
+API failure
+abnormal temperature
+
+2. Autonomous Fleet Monitoring
+AI agents monitor:
+
+battery degradation
+driving anomalies
+predictive maintenance
+communication failures
+Agent can:
+
+trigger maintenance tickets
+notify operators
+prioritize alerts
+summarize incidents
+=================================
+speed
+battery health
+GPS
+ADAS sensor data
+engine diagnostics
+fault events
+ECU status
+OTA update status
+
+
+kafka topics:
+
+vehicle.telemetry.raw
+vehicle.location.gps
+vehicle.engine.metrics
+vehicle.driver.behavior
+vehicle.fuel.metrics
+vehicle.ev.battery
+vehicle.diagnostics
+vehicle.diagnostics.dtc
+
+vehicle.events
+vehicle.adas.events
+vehicle.crash.events
+vehicle.maintenance.predictions
+
+
+vehicle.alerts
+vehicle.commands
+vehicle.software-updates
+
+
+
+
+
+
+
+kafka: VIN-based Partitioning
+VIN001 -> Partition 1
+
+VIN001 -> Partition 1
+
+VIN001 -> Partition 1
+
+Add protobuf for serilization/deseiailization
+
+Benefits:
+Smaller payloads
+Faster serialization
+Industry standard for telemetry
+
+Stage 8 — Add Redis
+FastAPI
+  |
+  +---- Redis
+  |
+  +---- Kafka
+
+Use Redis for:
+
+VIN lookup
+Device sessions
+Rate limiting
+Last known state
+
+kafka Consumer Groups
+VIN Partitioning
+Retries
+DLQ
+
+
+
+
+500,000 Vehicles --> Kafka Backbone --> Flink / ClickHouse / Spark
+KRaft Controller Configuration: Controllers not handle data, Controllers only manage:
+Topics
+Partitions
+Broker registration
+Leader election
+ACLs
+Configs
+For this architecture I'd use below 3 Dedicated KRaft Controllers nodes and 6 brokers.
+
+# KRaft Controllers
+-----------------
+
+Controller-1
+Controller-2
+Controller-3
+
+
+# Kafka Brokers
+-------------
+
+Broker-1
+Broker-2
+Broker-3
+Broker-4
+Broker-5
+Broker-6
+
+process.roles=controller
+
+controller.quorum.voters=
+1@controller1:9093,
+2@controller2:9093,
+3@controller3:9093
+Topics:
+I would not use a single giant topic. Instead:
+
+vehicle.telemetry.raw
+vehicle.diagnostics
+vehicle.gps
+vehicle.events
+vehicle.alerts
+vehicle.commands
+vehicle.software-updates
+Number of Partitions:
+500,000 vehicles each push 1 msg/sec = 500,000 messages/sec
+
+Typical production Example:
+
+vehicle-telemetry
+Partitions = 200-500
+In This case:
+
+vehicle-telemetry
+Partitions = 384
+Why? It Allows Flink Consumers to scale horizontally.
+
+Flink Consumer 1
+Flink Consumer 2
+...
+Flink Consumer 100
+
+
+
+
+                    KRaft Quorum
+           +-------------------------+
+           | Controller-1 (node.id=1)|
+           | Controller-2 (node.id=2)|
+           | Controller-3 (node.id=3)|
+           +-------------------------+
+
+                     Metadata
+
+                           │
+                           ▼
+
++------------+ +------------+ +------------+ +------------+ +------------+ +------------+
+|Broker-1    | |Broker-2    | |Broker-3    | |Broker-4    | |Broker-5    | |Broker-6    |
+|node.id=101 | |node.id=102 | |node.id=103 | |node.id=104 | |node.id=105 | |node.id=106 |
++------------+ +------------+ +------------+ +------------+ +------------+ +------------+
+
+                           │
+                           ▼
+
+                 vehicle.telemetry.raw
+                 Partitions = 384
+                 RF = 3
+                 Min ISR = 2
+				 Compression = zstd
+				 Retention = 7 days
