@@ -1756,6 +1756,52 @@ Benefits:
 - Controlled Memory
 
 
+----------------------------------------
+
+# Recommended deployment pattern
+
+- #1 Keep auth-service separately deployable and independently scalable from ingestion.
+- #2 Do token issuance and refresh in auth-service.
+- #3 Do token validation at gateway and ingestion via cached JWKS, not via per-request auth-service calls.
+- #4 Keep a hard trust contract: ingestion accepts only validated JWT claims and never trusts VIN from payload body.
+Sizing for your target envelope
+
+Ingestion pods: up to 100.
+- #1 Auth-service pods: min 12, baseline 20, max 60, emergency burst 100 during reconnect storms.
+- #2 Per-pod resources: 2-4 vCPU, 2-4 GB RAM.
+- #3 Deploy across 3 AZ with anti-affinity and PodDisruptionBudget.
+- #4 Autoscaling signals for auth-service
+
+Autoscaling signals for auth-service
+- #1 Primary: token issuance RPS.
+- #2 Primary: p95 token issuance latency.
+- #3 Primary: CPU utilization.
+- #4 Safety: 429 and 5xx error rate.
+- #5 Suggested SLO: p95 token issuance under 120 ms, availability 99.95%.
+
+Traffic and auth flow
+
+- #1 Vehicle authenticates with auth-service using cert/secret-bound identity.
+- #2 Auth-service issues JWT plus refresh token.
+- #3 Vehicle sends ingestion data with JWT.
+- #4 Gateway validates JWT signature using JWKS cache.
+- #5 Gateway forwards trusted identity claims to ingestion.
+- #6 Ingestion publishes to Kafka keyed by validated VIN.
+
+Operational hardening
+- #1 Separate rate limits for token issuance and token refresh endpoints.
+- #2 Canary auth-service rollouts, do not couple with ingestion rollouts.
+- #3 Cache JWKS aggressively in gateway and ingestion to survive short auth outages.
+- #4 Keep auth datastore highly available and replicated across AZs.
+- #5 Add circuit-breaker alerts: issuance latency spike, 5xx spike, refresh storm, JWKS fetch failures.
+
+Token strategy (practical)
+- #1 Short access token lifetime for ingestion authorization.
+- #2 Longer refresh token lifetime for intermittent connectivity.
+- #3 Rotate signing keys safely with overlapping key windows in JWKS.
+
+
+
 
 
 ```bash
