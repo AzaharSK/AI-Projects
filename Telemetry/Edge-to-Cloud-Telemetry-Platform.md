@@ -283,6 +283,53 @@ Backend:
 
 ```
 
+
+------------------
+
+### 1. Periodic Telemetry
+
+Sent every:
+
+5 sec
+10 sec
+30 sec
+
+depending on requirements.
+
+API:
+
+POST /v1/telemetry
+
+Schema:
+
+{
+  "vin":"VIN123",
+  "timestamp":1781123456789,
+
+  "vehicleMetrics":{
+    "speed":72,
+    "rpm":2200,
+    "odometer":123456
+  },
+
+  "batteryMetrics":{
+    "soc":81,
+    "voltage":13.8
+  },
+
+  "locationMetrics":{
+    "latitude":12.97,
+    "longitude":77.59
+  }
+}
+
+Backend:
+
+POST /v1/telemetry
+          |
+          v
+vehicle.telemetry.raw
+
 ### Vehicle API Service
 ```
 GET /vehicles/{vin}
@@ -309,3 +356,5 @@ GET /analytics/top-speeding-vehicles
 GET /analytics/battery-health
 ```
 __Queries ClickHouse or Cassandra.__
+
+
