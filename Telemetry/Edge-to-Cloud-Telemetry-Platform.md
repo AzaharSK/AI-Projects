@@ -1089,7 +1089,7 @@ __Queries ClickHouse or Cassandra.__
 # FAQ:
 ------------------------------------------------
 
-### should use celery here ?
+# Should use celery here ?
 
 No, **you should absolutely not use Celery here.** While Celery is an excellent tool for traditional web applications (e.g., sending emails, generating PDFs, or running heavy data exports), introducing it into a high-throughput streaming architecture for 1 million vehicles is an anti-pattern that 
 will severely degrade performance.
@@ -1146,8 +1146,9 @@ You *can* use Celery downstream, **after** the data has safely landed in Kafka, 
 
 Skip Celery for the ingestion layer. Trust FastAPI's event loop and `aiokafka`'s internal memory buffering to handle the high-throughput write stream natively. It is faster, cheaper, and vastly easier to maintain.
 
+-----------------------------------
 
-### Should i use any MVC kind of pattern ? repository service pattern etc ?
+# Should i use any MVC kind of pattern ? repository service pattern etc ?
 
 No, you should **not use traditional web application patterns like MVC (Model-View-Controller) or a heavy Repository-Service pattern** for this specific Ingestion Layer.
 
@@ -1214,7 +1215,7 @@ telematics-ingestion/
 
 ---
 
-## 4. How the Code Flows (Lean & Fast)
+### 4. How the Code Flows (Lean & Fast)
 
 By avoiding deep abstractions, your route handlers become incredibly clean and blazing fast. Here is how your API code reads when using a lightweight routing approach:
 
@@ -1246,6 +1247,8 @@ async def ingest_telemetry(
 
 ```
 
-## Summary
+### Summary
 
 Save the complex design patterns (like MVC, DDD, and Repository patterns) for your **downstream consumer services**—the microservices that consume from Kafka, run business logic, evaluate fleet alerts, and write data into relational or time-series databases. For this ingestion engine, **flat, fast, and simple** wins the game.
+
+------------------------
