@@ -1897,6 +1897,215 @@ telematics-platform/
 
 ```
 
+# Latest project tree
+
+```
+telematics-platform/
+│
+├── .env                                       # Global environment configuration file
+├── .gitignore
+├── Dockerfile                                 # Multi-stage production build container definition
+├── README.md
+├── requirements.txt                           # Pinning FastAPI, aiokafka, pydantic-settings, etc.
+│
+├── deployment/                                # Platform Infrastructure Deployment Track
+│   ├── docker/                                # Base Docker configurations
+│   ├── k8s/                                   # Raw Kubernetes manifests (Ingress, PodDisruptionBudgets)
+│   └── helm/                                  # Production Helm charts for cloud-native orchestration
+│
+├── infra-kafka/                               # Dedicated 3-Controller + 6-Broker KRaft Cluster
+│   ├── docker-compose.yml                     # Local composition stack orchestration file
+│   ├── configs/
+│   │   └── kraft/
+│   │       ├── controller-1.properties
+│   │       ├── controller-2.properties
+│   │       ├── controller-3.properties
+│   │       ├── broker1.properties
+│   │       ├── broker2.properties
+│   │       ├── broker3.properties
+│   │       ├── broker4.properties
+│   │       ├── broker5.properties
+│   │       └── broker6.properties
+│   └── data/                                  # Local mount path for persistent event log stores
+│       ├── broker-logs1/ ... broker-logs6/
+│       ├── controller-logs1/ ... controller-logs3/
+│       └── metadata1/ ... metadata3/
+│
+└── APP/                                       # Core Monolith/Microservice Execution Runtime
+    │
+    ├── __init__.py
+    ├── config.py                              # Environment parsing configs & state engine overrides
+    ├── db.py                                  # SQLite engine session bindings & transactional pragmas
+    ├── models.py                              # SQLAlchemy models tracking system state history
+    ├── schemas.py                             # Platform fallback structural Pydantic validation
+    ├── state_machine.py                       # Business rules for workflow state transitions
+    ├── health.py                              # Deep check infrastructure validation rules
+    ├── celery_app.py                          # Distributed cron worker definition & schedule definitions
+    │
+    ├── API/                                   # Public Gateway Boundary Core Routing Engine
+    │   ├── __init__.py
+    │   ├── router.py                          # Global entry point executing Module Auto-Discovery
+    │   ├── telematics-platform-public-router.py
+    │   └── telematics-platform-public-schema.py
+    │
+    ├── common/                                # Shared Platform Invariant Utilities
+    │   ├── __init__.py
+    │   ├── constants.py
+    │   ├── exceptions.py
+    │   ├── utils.py
+    │   └── config/
+    │       ├── logging.py
+    │       └── settings.py
+    │
+    ├── core/                                  # Platform Structural Lifecycle & Runtime Core
+    │   ├── __init__.py
+    │   ├── config.py                          # Internal baseline engine config specifications
+    │   ├── settings.py                        # Low-level core settings overrides
+    │   ├── lifecycle.py                       # Application bootstrap and tear-down loop definitions
+    │   ├── state_machine.py                   # State transition validation engines
+    │   └── health.py                          # System micro-level performance tracking metrics
+    │
+    ├── db/                                    # Raw Session Lifecycle Management
+    │   ├── __init__.py
+    │   ├── base.py                            # Shared declarative base mapping registers
+    │   └── session.py                         # Thread-safe database context factories
+    │
+    ├── discovery/                             # Automated Runtime Plug-In Ingestion Core
+    │   ├── __init__.py
+    │   ├── loader.py                          # Dynamic runtime module file scanner
+    │   ├── registry.py                        # Global internal key directory tracker
+    │   └── module_manager.py                  # Hot-swap runtime configuration orchestrator
+    │
+    ├── shared/                                # Core Architectural Shared Plane Subsystem
+    │   ├── __init__.py
+    │   │
+    │   ├── protobuf/                          # Compiled Protocol Buffer Schema Contracts
+    │   │   ├── __init__.py
+    │   │   ├── telemetry_pb2.py
+    │   │   ├── diagnostics_pb2.py
+    │   │   ├── vehicle_pb2.py
+    │   │   └── ota_pb2.py
+    │   │
+    │   ├── kafka/                             # High-Throughput KRaft Event Bus Drivers (Consolidated)
+    │   │   ├── __init__.py
+    │   │   ├── consumer.py                    # Global multi-partition consumer logic
+    │   │   ├── engine.py                      # Bounded asyncio.Queue + workers pipeline
+    │   │   ├── models.py                      # Engine level structural mappings
+    │   │   ├── producer.py                    # Idempotent publisher logic
+    │   │   ├── consumer_groups.py             # Active group strategy allocations
+    │   │   ├── retention_policies.py          # Log segment configurations per topic
+    │   │   ├── topic_contracts.py             # Wire payload schema enforcement definitions
+    │   │   ├── topic_registry.py              # Single source of truth for cluster topic metadata
+    │   │   │
+    │   │   ├── admin/
+    │   │   │   ├── acl_manager.py             # Security access control list mappings
+    │   │   │   ├── rebalance_manager.py       # Group partition assignment monitors
+    │   │   │   └── topic_manager.py           # Programmatic 384-partition provisioner
+    │   │   │
+    │   │   ├── producer/
+    │   │   │   ├── batching.py                # linger.ms & batch.size window aggregators
+    │   │   │   └── producer.py                # Underlying non-blocking Kafka producer client
+    │   │   │
+    │   │   ├── consumer/
+    │   │   │   ├── consumer.py                # Highly parallel polling consumer engines
+    │   │   │   └── rebalance.py               # StickyAssignor cluster rebalance handlers
+    │   │   │
+    │   │   ├── serializer/
+    │   │   │   ├── protobuf_serializer.py     # Confluent-compatible protobuf binary encoder
+    │   │   │   └── schema_registry.py         # Dynamic lookup cache client
+    │   │   │
+    │   │   ├── deserializer/
+    │   │   │   ├── protobuf_deserializer.py   # Raw bytes wire-format decoder
+    │   │   │   └── validator.py               # Pre-flight deserialization structure assertions
+    │   │   │
+    │   │   ├── dlq/
+    │   │   │   ├── dlq_consumer.py            # Poison pill analyzers and loggers
+    │   │   │   └── dlq_producer.py            # Fault redirectors tracking processing errors
+    │   │   │
+    │   │   └── partitioning/
+    │   │       └── vin_partitioner.py         # Pure-hashing VIN partition routing algorithm
+    │   │
+    │   ├── observability/                     # System Performance Telemetry Planes
+    │   │   ├── __init__.py
+    │   │   ├── healthcheck.py                 # Live/Ready probe checking infrastructure
+    │   │   ├── logging.py                     # Structured JSON background logging setup
+    │   │   ├── metrics.py                     # Prometheus counter and gauge registry
+    │   │   ├── otel.py                        # OpenTelemetry standard collectors configuration
+    │   │   └── tracing.py                     # W3C Distributed context propagation tools
+    │   │
+    │   ├── security/                          # Distributed Cryptography & Perimeter Guard
+    │   │   ├── __init__.py
+    │   │   ├── certificates.py                # mTLS vehicle certificate verify engines
+    │   │   ├── jwt.py                         # Telematics token authorization layer
+    │   │   └── oauth.py                       # OAuth2 token lifecycle validation
+    │   │
+    │   └── utils/                             # Foundational Code Helpers
+    │       ├── __init__.py
+    │       ├── ids.py                         # Collision-resistant packet ID generation
+    │       ├── time.py                        # Microsecond-accurate UTC system engines
+    │       └── validators.py                  # Standard string/regex verification engine
+    │
+    └── modules/                               # Plug-In Architecture Domain Plane (Auto-Discovered)
+        ├── contracts.py                       # ModulePlugin schema signature enforcement
+        ├── loader.py                          # Dynamic env validation module loader engine
+        │
+        ├── events/                            # Internal Core Domain Payload Schemas (Moved to modules)
+        │   ├── __init__.py
+        │   ├── alerts.py
+        │   ├── diagnostics.py
+        │   ├── ota.py
+        │   ├── telemetry.py
+        │   └── trips.py
+        │
+        ├── auth-service/                      # Authentication Plugin Module
+        │   ├── __init__.py                    # Exports plugin object; evaluates CERTSTORE_MODULE_AUTH_SERVICE_ENABLED
+        │   └── router.py
+        │
+        ├── ingestion-service/                 # Raw Input High-Speed Stream Processor Module
+        │   ├── __init__.py                    # Exports plugin targeting execution precedence priority
+        │   ├── api/
+        │   │   └── v1/
+        │   │       ├── device-health.py       # maps -> POST /v1/device/status
+        │   │       ├── diagnostics.py         # maps -> POST /v1/diagnostics
+        │   │       ├── ota.py                 # maps -> POST /v1/ota/status
+        │   │       ├── telemetry.py           # maps -> POST /v1/telemetry
+        │   │       └── trips-events.py        # maps -> POST /v1/trips/events
+        │   └── domains/                       # Internal bounded context definitions
+        │       ├── telemetry/
+        │       │   ├── exceptions.py
+        │       │   ├── models.py
+        │       │   ├── registry.py            # Local telemetry schema registry wire integration
+        │       │   ├── repository.py
+        │       │   ├── schemas.py             # Pydantic telemetry models
+        │       │   ├── service.py
+        │       │   └── proto/
+        │       │       └── telematics.proto 
+        │       └── vehicle/
+        │           ├── models.py
+        │           ├── registry.py            # Local vehicle schema registry wire integration
+        │           ├── repository.py
+        │           ├── schemas.py
+        │           ├── service.py
+        │           └── proto/
+        │               └── vehicle.proto
+        │
+        ├── telemetry-services/                # Background consumer engine grouping
+        │   ├── __init__.py
+        │   └── Consumers/                     # Core business analytical processors
+        │
+        ├── alert-services/                    # Anomaly Event Processing Pipeline
+        │   ├── __init__.py
+        │   └── Consumers/                     # Listens for real-time fault codes and boundary breaches
+        │
+        ├── analytics-services/                # Cold/Hot Storage Storage Aggregation Layer
+        │   ├── __init__.py
+        │   └── Consumers/                     # Long-running workers handling database operations
+        │
+        └── ota-service/                       # Firmware Release Tracker Component
+            ├── __init__.py
+            └── router.py
+
+```
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #                                                           END
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
