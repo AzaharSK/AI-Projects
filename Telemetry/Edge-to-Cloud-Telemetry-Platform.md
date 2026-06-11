@@ -1624,8 +1624,7 @@ This ensures your entire internal data ecosystem stays perfectly version-control
 
 -------------------
 
-# What else imrovemnt you suggest ?
-
+# What else improvemnt you suggest ?
 
 
 To push a platform handling 1 million concurrent vehicles from "functional" to "highly resilient and cost-optimized," you need to address the realities of cellular networks, data storage costs, and regional traffic spikes.
