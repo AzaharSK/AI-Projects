@@ -234,10 +234,84 @@ Alert Consumers          : 10–30
 Analytics Consumers      : 20–50
 ```
 
+```
++-----------------------------------------------------------+
+|                       Connected Vehicles                  |
+|                                                           |
+| AAOS / Linux / RTOS                                       |
+|                                                           |
+| Telemetry Agent                                           |
+| GPS Agent                                                 |
+| Diagnostics Agent                                         |
+| OTA Agent                                                 |
+| Certificate Manager                                       |
++-----------------------------------------------------------+
+                           |
+                           |
+                  HTTPS / MQTT / gRPC
+                           |
+                           v
 
-1M Vehicle Platform:
++-----------------------------------------------------------+
+|                  Global Load Balancer                     |
++-----------------------------------------------------------+
+                           |
+                           v
 
-Vehicle Side APIs
++-----------------------------------------------------------+
+|                 Ingestion API Layer                       |
+|                                                           |
+| FastAPI / Go / Java                                       |
+|                                                           |
+| Authentication  (in token/scope)                          |
+| Vehicle Identity  (in token/scope)                        |
+| Payload Validation  (in token/scope)                      |
+| Rate Limiting                                             |
++-----------------------------------------------------------+
+                           |
+                           |
+                     Kafka Producer
+                           |
+                           v
+
+======================================================================
+                           KAFKA PLATFORM
+======================================================================
+
+                KRaft Controllers (3 or 5)
+
+          +------------+------------+------------+
+          | Controller | Controller | Controller |
+          +------------+------------+------------+
+
+                              |
+
++------------+ +------------+ +------------+ +------------+ +------------+ +------------+
+| Broker-1   | | Broker-2   | | Broker-3   | | Broker-4   | | Broker-5   | | Broker-6   |
++------------+ +------------+ +------------+ +------------+ +------------+ +------------+
+
+Topics:
+
+vehicle.telemetry.raw
+vehicle.location.raw
+vehicle.health.raw
+vehicle.diagnostics.raw
+vehicle.device.status
+vehicle.trip.events
+vehicle.alerts
+vehicle.ota.events
+vehicle.telemetry.processed
+vehicle.analytics.features
+
+Partition Key = VIN
+
+======================================================================
+```
+
+
+# 1M Vehicle Platform:
+
+### Vehicle Side APIs
 ```
 POST /v1/telemetry
 POST /v1/device/status
@@ -245,6 +319,8 @@ POST /v1/diagnostics
 POST /v1/trips/events
 POST /v1/ota/status
 ```
+
+### Vehicle client requests
 ```
 Vehicle client 
    |
@@ -259,7 +335,7 @@ Vehicle client
    +--> POST /v1/ota/status
 ```
 
-Backend:
+### Backend handling  :
 ```
 /v1/telemetry
       |
@@ -282,7 +358,6 @@ Backend:
       +--> vehicle.ota.status
 
 ```
-
 
 ------------------
 
@@ -330,6 +405,7 @@ POST /v1/telemetry
           v
 vehicle.telemetry.raw
 ```
+
 
 ### Vehicle API Service
 ```
