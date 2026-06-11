@@ -288,20 +288,20 @@ Backend:
 
 ### 1. Periodic Telemetry
 
-Sent every:
+- __Sent every:__
 
-5 sec
-10 sec
-30 sec
+- 5 sec
+- 10 sec
+- 30 sec
 
 depending on requirements.
 
-API:
-
+- __API:__  
+```
 POST /v1/telemetry
-
-Schema:
-
+```
+- __Schema:__
+```json
 {
   "vin":"VIN123",
   "timestamp":1781123456789,
@@ -322,13 +322,14 @@ Schema:
     "longitude":77.59
   }
 }
-
-Backend:
-
+```
+- __Backend:__
+```
 POST /v1/telemetry
           |
           v
 vehicle.telemetry.raw
+```
 
 ### Vehicle API Service
 ```
