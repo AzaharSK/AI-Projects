@@ -216,3 +216,96 @@ Dashboards / APIs
 
 <img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/1a26e9d8-b11c-47b5-8b1a-431213cc66b0" />
 
+-------------------------------------------------------------
+
+
+# Scale Targets : For ~1 million vehicles:
+```sql
+Vehicles                 : 1,000,000
+Upload Interval          : 10 sec
+Messages/sec             : ~100,000
+
+Kafka Brokers            : 6–12
+Partitions               : 384–768
+Replication Factor       : 3
+FastAPI Pods             : 20–100
+Telemetry Consumers      : 20–50
+Alert Consumers          : 10–30
+Analytics Consumers      : 20–50
+```
+
+
+1M Vehicle Platform:
+
+Vehicle Side APIs
+```
+POST /v1/telemetry
+POST /v1/device/status
+POST /v1/diagnostics
+POST /v1/trips/events
+POST /v1/ota/status
+```
+```
+Vehicle client 
+   |
+   +--> POST /v1/telemetry
+   |
+   +--> POST /v1/device/status
+   |
+   +--> POST /v1/diagnostics
+   |
+   +--> POST /v1/trips/events
+   |
+   +--> POST /v1/ota/status
+```
+
+Backend:
+```
+/v1/telemetry
+      |
+      +--> vehicle.telemetry.raw
+
+/v1/device/status
+      |
+      +--> vehicle.device.status
+
+/v1/diagnostics
+      |
+      +--> vehicle.diagnostics.raw
+
+/v1/trips/events
+      |
+      +--> vehicle.trip.events
+
+/v1/ota/status
+      |
+      +--> vehicle.ota.status
+
+```
+
+### Vehicle API Service
+```
+GET /vehicles/{vin}
+GET /vehicles/{vin}/health
+GET /vehicles/{vin}/telemetry/latest
+```
+Reads from:
+```
+PostgreSQL
+Redis
+ClickHouse
+```
+__Not directly from Kafka producer/broker.__
+
+
+### Fleet API Service
+
+```
+GET /fleet/summary
+GET /fleet/trips
+GET /fleet/alerts
+Analytics API Service
+GET /analytics/top-speeding-vehicles
+GET /analytics/battery-health
+```
+__Queries ClickHouse or Cassandra.__
