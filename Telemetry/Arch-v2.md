@@ -1,4 +1,24 @@
 
+Vehicle
+   |
+mTLS HTTPS
+   |
+Envoy
+   |
+FastAPI (100 Pods)
+   |
+Bounded Queue
+   |
+AioKafka Producer
+   |
+Kafka
+   |
+Telemetry Service
+Alert Service
+Analytics Service
+Storage Service
+Device Service
+
 
 # Telematics Platform Architecture Validation (1M Vehicles)
 
@@ -18,6 +38,17 @@ Telemetry Consumers      : 20–50
 Alert Consumers          : 10–30
 Analytics Consumers      : 20–50
 ```
+# Deployement : 
+```
+Ingress Pods          100
+CPU per Pod           2-4 vCPU
+RAM per Pod           2-4 GB
+Kafka Workers         20 per pod
+Kafka Brokers         6-9
+Controllers           3
+Partitions            384
+Availability Zones    3
+```
 
 ```
 +-----------------------------------------------------------+
@@ -30,21 +61,30 @@ Analytics Consumers      : 20–50
 | Diagnostics Agent                                         |
 | OTA Agent                                                 |
 | Certificate Manager                                       |
++------------------------------------------------------------+
+Vehicles                 : 1,000,000
+Upload Interval          : 10 sec
+post Messages/sec        : ~100,000 msg/sec
 +-----------------------------------------------------------+
                            |
                            |
-                  HTTPS / MQTT / gRPC
+                 mTLS  HTTPS / MQTT / gRPC
+                           |
+                           v
+
++----------------------------------------------------------------------------------------------------------------------------------------------------+
+           Global Load Balancer/ API Gateway / Envoy
+------------------------------------------------------------------------------------------------------------------------------------------------------
+Azure Traffic Manager (DNS-level global LB)
+Azure App Gateway/WAF (L7 LB, TLS termination, OWASP WAF)
+Envoy sidecar (JWT SCOPED validation via JWKS cache, rate limiting)
+Envoy holds the JWKS public key cache so every ingestion pod validates tokens locally without hitting auth_service per request.
++---------------------------------------------------------------------------------------------------------------------------------------------------+
                            |
                            v
 
 +-----------------------------------------------------------+
-|                  Global Load Balancer                     |
-+-----------------------------------------------------------+
-                           |
-                           v
-
-+-----------------------------------------------------------+
-|                 Ingestion API Layer                       |
+|              Fastapi Ingestion API Layer  (100 Pods)      |
 |                                                           |
 | FastAPI / Go / Java                                       |
 |                                                           |
@@ -55,7 +95,12 @@ Analytics Consumers      : 20–50
 +-----------------------------------------------------------+
                            |
                            |
++------------------------------------------------------------+
                      Kafka Producer
+Kafka Brokers            : 6–12
+Partitions               : 384–768
+Replication Factor       : 3
++------------------------------------------------------------+
                            |
                            v
 
