@@ -2,6 +2,100 @@
 
 # Telematics Platform Architecture Validation (1M Vehicles)
 
+<img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/15e34207-b81b-44c3-9d69-8a8873de908f" />
+
+# Scale Targets : For ~1 million vehicles:
+```sql
+Vehicles                 : 1,000,000
+Upload Interval          : 10 sec
+Messages/sec             : ~100,000
+
+Kafka Brokers            : 6–12
+Partitions               : 384–768
+Replication Factor       : 3
+FastAPI Pods             : 20–100
+Telemetry Consumers      : 20–50
+Alert Consumers          : 10–30
+Analytics Consumers      : 20–50
+```
+
+```
++-----------------------------------------------------------+
+|                       Connected Vehicles                  |
+|                                                           |
+| AAOS / Linux / RTOS                                       |
+|                                                           |
+| Telemetry Agent                                           |
+| GPS Agent                                                 |
+| Diagnostics Agent                                         |
+| OTA Agent                                                 |
+| Certificate Manager                                       |
++-----------------------------------------------------------+
+                           |
+                           |
+                  HTTPS / MQTT / gRPC
+                           |
+                           v
+
++-----------------------------------------------------------+
+|                  Global Load Balancer                     |
++-----------------------------------------------------------+
+                           |
+                           v
+
++-----------------------------------------------------------+
+|                 Ingestion API Layer                       |
+|                                                           |
+| FastAPI / Go / Java                                       |
+|                                                           |
+| Authentication  (in token/scope)                          |
+| Vehicle Identity  (in token/scope)                        |
+| Payload Validation  (in token/scope)                      |
+| Rate Limiting                                             |
++-----------------------------------------------------------+
+                           |
+                           |
+                     Kafka Producer
+                           |
+                           v
+
+======================================================================
+                           KAFKA PLATFORM
+======================================================================
+
+                KRaft Controllers (3 or 5)
+
+          +------------+------------+------------+
+          | Controller | Controller | Controller |
+          +------------+------------+------------+
+
+                              |
+
++------------+ +------------+ +------------+ +------------+ +------------+ +------------+
+| Broker-1   | | Broker-2   | | Broker-3   | | Broker-4   | | Broker-5   | | Broker-6   |
++------------+ +------------+ +------------+ +------------+ +------------+ +------------+
+
+Topics:
+
+vehicle.telemetry.raw
+vehicle.location.raw
+vehicle.health.raw
+vehicle.diagnostics.raw
+vehicle.device.status
+vehicle.trip.events
+vehicle.alerts
+vehicle.ota.events
+vehicle.telemetry.processed
+vehicle.analytics.features
+
+Partition Key = VIN
+
+======================================================================
+
+
+```
+
+
 ## Executive Verdict
 Your design direction is strong and production-oriented. The core pattern is correct:
 - Stateless ingestion edge
