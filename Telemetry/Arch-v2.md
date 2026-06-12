@@ -135,84 +135,9 @@ Partition Key = VIN
 ```
 
 
-## Executive Verdict
-Your design direction is strong and production-oriented. The core pattern is correct:
-- Stateless ingestion edge
-- Auth at perimeter
-- Kafka as the decoupled event backbone
-- VIN as partition key for per-vehicle ordering
-- Separated downstream consumers by domain
 
-Overall readiness: **Good foundation, not yet production-hardened for sustained 100,000 messages/sec** until backpressure, schema governance, and operational controls are tightened.
 
-## Assumption Check (Given Scale Targets)
-- Vehicles: 1,000,000
-- Upload interval: 10 seconds
-- Expected ingest rate: ~100,000 messages/sec
-- Kafka partitions: 384 (expandable to 768)
-- Brokers: 6 to 9 baseline
-- FastAPI pods: up to 100
-
-## What Is Already Correct
-1. Thin ingestion service with minimal business logic.
-2. Single shared asynchronous Kafka producer per process lifecycle.
-3. Partition key by VIN to preserve message order per vehicle.
-4. Separation of ingestion and downstream business processing.
-5. Dedicated processing paths (alerts, analytics, diagnostics) after Kafka.
-6. DLQ concept included.
-
-## Critical Gaps To Close Before Production
-1. Backpressure safety at ingestion edge is underdefined.
-- Risk: memory pressure and pod crashes during Kafka or network degradation.
-- Fix: bounded in-memory queue with overload shedding and circuit-breaker behavior.
-
-2. Fire-and-forget send strategy needs delivery guarantees definition.
-- Risk: silent drops if not instrumented and monitored.
-- Fix: explicit reliability mode per endpoint class:
-  - Critical control/status: await broker ack.
-  - High-rate telemetry: queue then asynchronous send with failure accounting.
-
-3. Schema governance is incomplete across teams.
-- Risk: producer/consumer drift and runtime decode failures.
-- Fix: mandatory schema registry compatibility policy and CI schema checks.
-
-4. Topic model can be simplified for hot-path efficiency.
-- Risk: unnecessary fan-out and operations overhead.
-- Fix: consolidate highly similar raw streams where processing cadence is shared, and tag payload type.
-
-5. Multi-region failover and data residency are not concretely defined.
-- Risk: regional outage blast radius and latency spikes.
-- Fix: region-local ingestion plus asynchronous replication to analytics region.
-
-6. Security hardening is implied but not explicitly enforceable.
-- Risk: trust boundary ambiguity.
-- Fix: perimeter verification only, internal signed identity propagation, strict scope mapping matrix.
-
-## Project Structure Validation
-Your structure is comprehensive and modular. It is close to an enterprise-ready layout, but it is too broad for initial delivery unless ownership boundaries are explicit.
-
-### Keep
-- Dedicated shared libraries for kafka, observability, security.
-- Domain modules split by bounded context.
-- Infra and deployment tracks separated from app runtime.
-- Worker groups separated by function.
-
-### Improve
-1. Introduce a clearly named ingestion boundary package.
-- Purpose: host only edge handlers, auth context extraction, queueing, and Kafka publish adapters.
-
-2. Separate platform libraries from domain module code ownership.
-- Platform libraries: reusable runtime blocks.
-- Domain modules: business workflows and APIs.
-
-3. Add architecture decision records and service contracts folders.
-- Purpose: avoid drift between code and architecture claims.
-
-4. Add explicit load-test scenario definitions tied to SLOs.
-- Include reconnect storm, broker loss, schema mismatch spike, and AZ failure cases.
-
-5. Add runbooks for degraded modes.
-- Queue full mode, registry unavailable mode, broker unavailable mode.
+# Telematics Platform Architecture Validation (1M Vehicles)
 
 ## Project Structure
 
@@ -223,17 +148,40 @@ Three simplifications applied from the previous complex layout:
 
 ```text
 telematics-platform/
-├── .env
-├── .gitignore
-├── Dockerfile
-├── README.md
-├── requirements.txt
+├── .env                                       # Local-only secrets — never committed (blocked by .gitignore)
+├── .env.example                               # Committed safe template — all keys present, no real values
+├── .gitignore                                 # Blocks .env, *.pem, credentials.json, __pycache__, .venv
+├── Dockerfile                                 # Root dev image — not used for production service builds
+├── README.md                                  # Project overview, local setup, and service index
+├── pyproject.toml                             # uv workspace root — declares all service members as workspace packages
+├── uv.lock                                    # Monorepo-wide locked dependency graph — committed, guarantees reproducibility
 │
 ├── scripts/                                   # Root automation and operations scripts
 │   ├── bootstrap_kafka.py                     # KRaft cluster ID binding and initial provisioning
 │   ├── create_topics.py                       # Programmatic 384-partition topic provisioning
 │   ├── seed_demo_data.py                      # Simulated vehicle telemetry for pipeline testing
-│   └── generate_proto.sh                      # Compiles .proto files into service-local _pb2.py modules
+│   ├── generate_proto.sh                      # Compiles .proto files into service-local _pb2.py modules
+│   └── security_scan.py                       # Pre-CI secret scan — detects hardcoded keys, tokens, PEM blobs
+│
+├── .github/                                   # GitHub Actions CI/CD — version-controlled with source code
+│   └── workflows/
+│       ├── ci.yaml                            # PR gate: lint → type-check → unit tests → integration tests
+│       ├── build-images.yaml                  # Build + push all service Docker images to ACR on merge to main
+│       ├── deploy-staging.yaml                # Helm upgrade to staging AKS cluster on image push
+│       ├── deploy-prod.yaml                   # Gated Helm upgrade to prod — requires manual approval
+│       ├── proto-compat-check.yaml            # Runs schema registry compatibility check against Protobuf contracts
+│       └── secret-scan.yaml                   # Runs scripts/security_scan.py on every PR — blocks on detection
+│
+├── docs/                                      # Architecture documentation and decision records
+│   └── adr/                                   # Architecture Decision Records — why, not just what
+│       ├── 0001-kafka-kraft-no-zookeeper.md   # Why KRaft was chosen over ZooKeeper-based Kafka
+│       ├── 0002-384-partitions-baseline.md    # Partition count rationale: 100k msg/sec ÷ ~260 msg/s/partition
+│       ├── 0003-grpc-not-mqtt.md              # Transport decision: gRPC HTTP/2 persistent vs MQTT broker hop
+│       ├── 0004-vin-partition-key.md          # VIN as Kafka partition key for per-vehicle message ordering
+│       ├── 0005-bounded-queue-backpressure.md # asyncio.Queue cap + 503 flip instead of unbounded buffer
+│       ├── 0006-helm-only-manifests.md        # Single Helm source-of-truth; no raw k8s/ committed
+│       ├── 0007-platform-layer-no-plugouts.md # Why plugouts/ was merged into platform/ (single client layer)
+│       └── 0008-workers-colocated.md          # Why workers/ moved inside owning services (team ownership)
 │
 ├── deployment/                                # Kubernetes manifests — Helm is the ONLY source of truth
 │   └── helm/                                  # All environments rendered from here; no raw k8s/ files
@@ -276,6 +224,15 @@ telematics-platform/
 │       ├── metadata1/                         # KRaft metadata quorum store (controller 1)
 │       ├── metadata2/                         # KRaft metadata quorum store (controller 2)
 │       └── metadata3/                         # KRaft metadata quorum store (controller 3)
+│
+├── infra/                                     # Shared infra config templates — no real secrets committed here
+│   └── secrets/                               # .env.example templates per service — safe reference files
+│       ├── ingestion_service.env.example      # Required env vars for ingestion_service (KAFKA_BROKERS, JWKS_URL, etc.)
+│       ├── auth_service.env.example           # Required env vars for auth_service (DB_URL, JWT_SECRET_REF, etc.)
+│       ├── telemetry_service.env.example      # Required env vars for telemetry_service (CLICKHOUSE_URL, etc.)
+│       ├── analytics_service.env.example      # Required env vars for analytics_service (SPARK_MASTER, ADLS_ACCOUNT, etc.)
+│       ├── ai_service.env.example             # Required env vars for ai_service (OPENAI_KEY_REF, VECTOR_STORE_URL, etc.)
+│       └── platform.env.example               # Shared platform vars (REDIS_URL, SCHEMA_REGISTRY_URL, OTEL_ENDPOINT)
 │
 ├── infra-azure/                               # Azure PaaS infrastructure layer (DNS routing + gateway)
 │   ├── traffic-manager/                       # Azure Traffic Manager — global DNS-based routing
@@ -381,7 +338,8 @@ telematics-platform/
   │
   └── services/                              # Independently deployable service images
       ├── ingestion_service/                 # INGRESS AUTHORITY — only service accepting vehicle data
-      │   ├── requirements.txt               # FastAPI, aiokafka, protobuf, service-local deps
+      │   ├── pyproject.toml                 # uv workspace member — inherits shared platform/ deps from workspace root
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Multi-stage build — targets 100-pod horizontal deployment
       │   ├── entrypoint.sh                  # Uvicorn startup with --workers tuned to pod CPU count
       │   ├── main.py                        # App factory — lifespan hooks wire AIOKafka producer singleton
@@ -433,7 +391,8 @@ telematics-platform/
       │               └── vehicle.proto      # Protobuf vehicle contract (compiled → _pb2.py)
       │
       ├── auth_service/                      # TOKEN ISSUER — JWT issuance, JWKS, vehicle identity lifecycle
-      │   ├── requirements.txt               # Auth deps — cryptography, PyJWT, argon2-cffi
+      │   ├── pyproject.toml                 # uv workspace member — declares auth-specific extras (cryptography, argon2-cffi)
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Auth image — separate for canary rollout safety
       │   ├── entrypoint.sh                  # Auth startup (min 12, baseline 20, max 60 replicas)
       │   ├── main.py                        # Auth service bootstrap + lifespan
@@ -449,7 +408,8 @@ telematics-platform/
       │           └── vehicles.py            # POST /v2/auth/vehicles/register
       │
       ├── telemetry_service/                 # TELEMETRY READ — query and SSE stream API over ClickHouse
-      │   ├── requirements.txt               # aiochclient, fastapi, service-local deps
+      │   ├── pyproject.toml                 # uv workspace member — declares aiochclient, fastapi extras
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Telemetry image — baseline 8 replicas
       │   ├── entrypoint.sh                  # Telemetry process startup
       │   ├── main.py                        # Service bootstrap + lifespan
@@ -470,7 +430,8 @@ telematics-platform/
       │           └── historical.py          # GET /v2/telemetry/history/{vin}
       │
       ├── diagnostics_service/               # DIAGNOSTICS — DTC fault processing and correlation
-      │   ├── requirements.txt               # Diagnostics service runtime deps
+      │   ├── pyproject.toml                 # uv workspace member — declares diagnostics-specific deps
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Diagnostics image — baseline 6 replicas
       │   ├── entrypoint.sh                  # Diagnostics process startup
       │   ├── main.py                        # Service bootstrap + lifespan
@@ -491,7 +452,8 @@ telematics-platform/
       │           └── clear.py               # POST /v2/diagnostics/clear-faults
       │
       ├── alert_service/                     # ALERTS — real-time rules engine and alert management
-      │   ├── requirements.txt               # Alert evaluation runtime deps
+      │   ├── pyproject.toml                 # uv workspace member — declares alert evaluation extras
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Alert image — baseline 8 replicas
       │   ├── entrypoint.sh                  # Alert process startup
       │   ├── main.py                        # Service bootstrap + lifespan
@@ -512,7 +474,8 @@ telematics-platform/
       │           └── active.py              # GET /v2/alerts/active
       │
       ├── analytics_service/                 # ANALYTICS — window aggregation, all sink dispatch, summary API
-      │   ├── requirements.txt               # Analytics, Spark client, sink deps
+      │   ├── pyproject.toml                 # uv workspace member — declares Spark client, sink, analytics extras
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Analytics image — baseline 8 replicas
       │   ├── entrypoint.sh                  # Analytics process startup
       │   ├── main.py                        # Service bootstrap + lifespan
@@ -536,7 +499,8 @@ telematics-platform/
       │           └── metrics.py             # GET /v2/analytics/summary
       │
       ├── fleet_service/                     # FLEET — vehicle group topology and inventory management
-      │   ├── requirements.txt               # Fleet service runtime deps
+      │   ├── pyproject.toml                 # uv workspace member — declares fleet service extras
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # Fleet image — baseline 4 replicas
       │   ├── entrypoint.sh                  # Fleet process startup
       │   ├── main.py                        # Service bootstrap + lifespan
@@ -553,7 +517,8 @@ telematics-platform/
       │           └── inventory.py           # GET /v2/fleet/vehicles
       │
       ├── ota_service/                       # OTA — firmware campaign lifecycle and HTTPS delivery
-      │   ├── requirements.txt               # OTA service runtime deps
+      │   ├── pyproject.toml                 # uv workspace member — declares OTA service extras
+      │   ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
       │   ├── Dockerfile                     # OTA image — baseline 6 replicas
       │   ├── entrypoint.sh                  # OTA process startup
       │   ├── main.py                        # Service bootstrap + lifespan
@@ -569,7 +534,8 @@ telematics-platform/
       │           └── packages.py            # GET/POST /v2/ota/packages
       │
       └── ai_service/                        # AI — LangGraph multi-agent RAG orchestration + copilot API
-          ├── requirements.txt               # LangGraph, LangChain, vector DB, embeddings, openai deps
+          ├── pyproject.toml                 # uv workspace member — declares LangGraph, LangChain, vector DB extras
+          ├── requirements.txt               # Docker build pin file — generated from pyproject.toml via `uv export`
           ├── Dockerfile                     # AI image — GPU-compatible base (nvidia/cuda) when needed
           ├── entrypoint.sh                  # AI startup — baseline 4 replicas, scales on concurrency
           ├── main.py                        # AI service bootstrap + lifespan
@@ -595,11 +561,115 @@ telematics-platform/
                   └── recommendations.py     # GET /v2/ai/predictive/maintenance
 ```
 
+
+## Executive Verdict
+Your design direction is strong and production-oriented. The core pattern is correct:
+- Stateless ingestion edge
+- Auth at perimeter
+- Kafka as the decoupled event backbone
+- VIN as partition key for per-vehicle ordering
+- Separated downstream consumers by domain
+
+Overall readiness: **Good foundation, not yet production-hardened for sustained 100,000 messages/sec** until backpressure, schema governance, and operational controls are tightened.
+
+## Assumption Check (Given Scale Targets)
+- Vehicles: 1,000,000
+- Upload interval: 10 seconds
+- Expected ingest rate: ~100,000 messages/sec
+- Kafka partitions: 384 (expandable to 768)
+- Brokers: 6 to 9 baseline
+- FastAPI pods: up to 100
+
+## What Is Already Correct
+1. Thin ingestion service with minimal business logic.
+2. Single shared asynchronous Kafka producer per process lifecycle.
+3. Partition key by VIN to preserve message order per vehicle.
+4. Separation of ingestion and downstream business processing.
+5. Dedicated processing paths (alerts, analytics, diagnostics) after Kafka.
+6. DLQ concept included.
+
+## Critical Gaps To Close Before Production
+1. Backpressure safety at ingestion edge is underdefined.
+- Risk: memory pressure and pod crashes during Kafka or network degradation.
+- Fix: bounded in-memory queue with overload shedding and circuit-breaker behavior.
+
+2. Fire-and-forget send strategy needs delivery guarantees definition.
+- Risk: silent drops if not instrumented and monitored.
+- Fix: explicit reliability mode per endpoint class:
+  - Critical control/status: await broker ack.
+  - High-rate telemetry: queue then asynchronous send with failure accounting.
+
+3. Schema governance is incomplete across teams.
+- Risk: producer/consumer drift and runtime decode failures.
+- Fix: mandatory schema registry compatibility policy and CI schema checks.
+
+4. Topic model can be simplified for hot-path efficiency.
+- Risk: unnecessary fan-out and operations overhead.
+- Fix: consolidate highly similar raw streams where processing cadence is shared, and tag payload type.
+
+5. Multi-region failover and data residency are not concretely defined.
+- Risk: regional outage blast radius and latency spikes.
+- Fix: region-local ingestion plus asynchronous replication to analytics region.
+
+6. Security hardening is implied but not explicitly enforceable.
+- Risk: trust boundary ambiguity.
+- Fix: perimeter verification only, internal signed identity propagation, strict scope mapping matrix.
+
+## Project Structure Validation
+Your structure is comprehensive and modular. It is close to an enterprise-ready layout, but it is too broad for initial delivery unless ownership boundaries are explicit.
+
+### Keep
+- Dedicated shared libraries for kafka, observability, security.
+- Domain modules split by bounded context.
+- Infra and deployment tracks separated from app runtime.
+- Worker groups separated by function.
+
+### Improve
+1. Introduce a clearly named ingestion boundary package.
+- Purpose: host only edge handlers, auth context extraction, queueing, and Kafka publish adapters.
+
+2. Separate platform libraries from domain module code ownership.
+- Platform libraries: reusable runtime blocks.
+- Domain modules: business workflows and APIs.
+
+3. Add architecture decision records and service contracts folders.
+- Purpose: avoid drift between code and architecture claims.
+
+4. Add explicit load-test scenario definitions tied to SLOs.
+- Include reconnect storm, broker loss, schema mismatch spike, and AZ failure cases.
+
+5. Add runbooks for degraded modes.
+- Queue full mode, registry unavailable mode, broker unavailable mode.
+
+### Structural Improvements Applied (This Revision)
+
+**1. uv Workspace (Dependency Management)**
+- Root `pyproject.toml` declares all services as workspace members; `uv.lock` is the single locked graph.
+- Each service has its own `pyproject.toml` for extras and a `requirements.txt` generated via `uv export` for Docker.
+- Guarantees `pydantic`, `protobuf`, and `aiokafka` versions are consistent across all 9 services.
+
+**2. Architecture Decision Records (`docs/adr/`)**
+- 8 seed ADRs covering every major structural and protocol decision (KRaft, 384 partitions, gRPC-not-MQTT, VIN key, bounded queue, Helm-only, platform merge, workers colocation).
+- Format: numbered, date-stamped markdown. Engineers read *why* before changing *what*.
+
+**3. CI/CD Pipelines (`.github/workflows/`)**
+- `ci.yaml` — PR gate: lint → type-check → unit → integration.
+- `build-images.yaml` — builds and pushes all 9 service images to ACR on merge.
+- `deploy-staging.yaml` / `deploy-prod.yaml` — Helm upgrade pipelines (prod requires manual approval gate).
+- `proto-compat-check.yaml` — blocks merge if Protobuf schema breaks registry compatibility.
+- `secret-scan.yaml` — runs `scripts/security_scan.py` on every PR; blocks on any detected secret.
+
+**4. Secrets Management (`infra/secrets/` + `scripts/security_scan.py`)**
+- `.env.example` at repo root: committed safe template with all required keys, no real values.
+- `infra/secrets/*.env.example` per service: documents every required environment variable with descriptions.
+- `scripts/security_scan.py`: regex + entropy scan for hardcoded tokens, PEM blocks, and connection strings.
+- `.gitignore` explicitly blocks: `.env`, `*.pem`, `credentials.json`, `*_rsa`, `*.key`.
+
 ### Why This Correction Helps
 1. Service-first ownership: ingestion, diagnostics, OTA, analytics, and fleet are cleanly separated.
 2. Ingestion clarity: all edge concerns (auth context, queue, workers, middleware, routers) live in `ingestion_service`.
 3. Domain specificity: VSS ingestion keeps dedicated schemas, models, protobuf, and service classes.
-4. Integration safety: outbound systems remain replaceable through plugout adapters.
+4. Integration safety: outbound systems remain replaceable through platform/ clients.
 5. Team scalability: each service can evolve and deploy independently within one repository.
 
 ## Recommended Ingestion Runtime Pattern
@@ -846,3 +916,5 @@ Conditionally approved for implementation planning and phased rollout. The struc
 4. Other business services independently deployable.
 5. ClickHouse/OpenSearch/AI RAG/Spark/ADLS pipelines independently deployable.
 6. One primary Kubernetes generation mechanism: Helm as source of truth.
+
+
