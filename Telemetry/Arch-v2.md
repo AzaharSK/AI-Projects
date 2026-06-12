@@ -1,25 +1,3 @@
-
-Vehicle
-   |
-mTLS HTTPS
-   |
-Envoy
-   |
-FastAPI (100 Pods)
-   |
-Bounded Queue
-   |
-AioKafka Producer
-   |
-Kafka
-   |
-Telemetry Service
-Alert Service
-Analytics Service
-Storage Service
-Device Service
-
-
 # Telematics Platform Architecture Validation (1M Vehicles)
 
 <img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/15e34207-b81b-44c3-9d69-8a8873de908f" />
