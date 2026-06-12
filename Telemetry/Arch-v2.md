@@ -96,6 +96,11 @@ Envoy holds the JWKS public key cache so every ingestion pod validates tokens lo
                            |
                            |
 +------------------------------------------------------------+
+|            Bounded asyncio Queue + DLQ                     |
++------------------------------------------------------------+
+                           |
+                           |
++------------------------------------------------------------+
                      Kafka Producer
 Kafka Brokers            : 6–12
 Partitions               : 384–768
@@ -136,6 +141,17 @@ vehicle.analytics.features
 Partition Key = VIN
 
 ======================================================================
+                              |
+                              |
+
++====================================================================+
+                     Telemetry Service
+                     Alert Service
+                     Analytics Service
+                     Storage Service
+                     Device Service
+
++==========================================================+
 
 
 ```
