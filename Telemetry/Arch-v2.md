@@ -1,3 +1,155 @@
+# Edge-to-Cloud (Connected Vehicle) Telemetry Platform
+
+## Business Context
+
+Modern automotive OEMs, fleet operators, logistics companies, and mobility providers require real-time visibility into vehicle health, location, driver behavior, connectivity status, and operational efficiency across large fleets. Traditional vehicle diagnostics are reactive and often identify issues only after a vehicle reaches a service center.
+
+The Connected Vehicle Telematics Platform enables continuous collection, processing, storage, and analysis of vehicle telemetry data from millions of connected vehicles. The platform provides near real-time monitoring, predictive maintenance, fleet analytics, remote diagnostics, and over-the-air (OTA) software update capabilities.
+
+## Key Business Objectives
+
+* Enable real-time vehicle monitoring across global fleets.
+* Improve vehicle uptime through predictive maintenance.
+* Reduce operational costs by identifying inefficient driving patterns.
+* Enhance driver safety through proactive alerting and behavioral analytics.
+* Support remote diagnostics and troubleshooting without dealership visits.
+* Enable OTA software and configuration updates.
+* Provide fleet operators with actionable analytics and reporting.
+* Create a scalable cloud platform capable of supporting millions of connected vehicles.
+
+## Typical Data Collected
+
+* Vehicle speed, RPM, odometer, gear position.
+* Battery voltage, current, state-of-charge (SOC), state-of-health (SOH).
+* GPS location, heading, altitude, route information.
+* Engine temperature, coolant temperature, fuel consumption.
+* Cellular, Wi-Fi, and Bluetooth connectivity status.
+* Device health metrics such as CPU, memory, storage, and network utilization.
+* Diagnostic Trouble Codes (DTCs) and fault events.
+* OTA update status and software version information.
+
+## Primary Business Use Cases
+
+### Fleet Management
+
+* Real-time vehicle tracking.
+* Route optimization.
+* Fleet utilization monitoring.
+* Fuel consumption analysis.
+* Driver performance scoring.
+
+### Predictive Maintenance
+
+* Early detection of component degradation.
+* Battery health monitoring.
+* Engine and powertrain anomaly detection.
+* Service scheduling recommendations.
+
+### Driver Safety
+
+* Overspeed detection.
+* Harsh braking identification.
+* Harsh acceleration detection.
+* Unsafe driving behavior alerts.
+
+### Vehicle Diagnostics
+
+* Remote fault code retrieval.
+* Vehicle health dashboards.
+* Service center integration.
+* Root-cause analysis support.
+
+### OTA Software Management
+
+* Remote software deployment.
+* Feature enablement.
+* Firmware updates.
+* Rollback management.
+* Campaign monitoring.
+
+### Business Intelligence
+
+* Fleet KPIs.
+* Vehicle utilization reports.
+* Maintenance cost analysis.
+* Battery degradation analytics.
+* Regional performance benchmarking.
+
+## Platform Scale
+
+* Supports up to 1 million connected vehicles.
+* Processes over 100,000 telemetry events per second.
+* Distributed Kafka-based event streaming architecture.
+* Multi-service cloud-native deployment.
+* Highly available and horizontally scalable infrastructure.
+
+## Technology Stack
+
+* Vehicle Edge: AAOS / Linux Telematics Agent
+* Transport: gRPC, HTTPS, Protobuf
+* API Layer: FastAPI
+* Streaming Platform: Apache Kafka (KRaft)
+* Schema Management: Schema Registry
+* Processing: Python Microservices
+* Storage: PostgreSQL, ClickHouse, Redis, Object Storage
+* Monitoring: Prometheus, Grafana, OpenTelemetry
+* Deployment: Docker, Kubernetes
+* Security: mTLS, JWT Authentication, Certificate Management
+
+
+
+Even Many large-scale telemetry platforms are built as domain-agnostic Edge-to-Cloud platforms and then customized for different industries.
+
+```
+Automotive 
+IoT 
+RDK-B Connected devices
+AI observability
+Fleet management
+Telecom
+Healthcare devices
+smart manufacturing
+Industrial automation
+EV infrastructure
+```
+
+
+### Layer 1: Common Telemetry Platform (Reusable)
+This remains the same across Automotive, AI Observability, Fleet Management, Telecom, and Healthcare.
+
+```
+Edge Device
+    ↓
+Data Collection Agent
+    ↓
+Protocol Gateway
+    ↓
+Message Broker
+    ↓
+Stream Processing
+    ↓
+Storage
+    ↓
+Analytics / AI
+    ↓
+Dashboards / APIs
+```
+------------------
+## Core capabilities should be considered:
+- Device registration
+- Device identity
+- Authentication
+- Telemetry ingestion
+- Event processing
+- Time-series storage
+- Alerting
+- Fleet/device management
+- OTA updates
+- Observability
+- Digital twin
+- Data lake integration
+
+
 # Telematics Platform Architecture Validation (1M Vehicles)
 
 <img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/15e34207-b81b-44c3-9d69-8a8873de908f" />
@@ -142,9 +294,6 @@ Partition Key = VIN
 ## Project Structure
 
 Three simplifications applied from the previous complex layout:
-1. **`deployment/helm/` is the only k8s manifest source** — `deployment/docker/`, `deployment/k8s/`, and per-service `manifest/` folders removed.
-2. **Kafka consumer workers co-located inside their owning service** — top-level `workers/` folder removed.
-3. **`platform/` is the single shared client layer** — `plugouts/` folder removed and all adapters merged into `platform/`.
 
 ```text
 telematics-platform/
