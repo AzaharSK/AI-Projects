@@ -171,8 +171,8 @@ Dashboards / APIs
 
 
 ---------------------------------
-
-# Step: Auth services:
+# Auth services:
+-------------------------------
 
 Yes, in a production-scale telematics platform (handling 1 million+ vehicles), the **Auth Service should absolutely be a separate microservice**.
 
@@ -210,6 +210,61 @@ The token issued by the Auth Service should embed the **VIN** (as the subject or
 Using a standard JWT format allows your Ingestion API to validate the payload in microseconds without a database lookup.
 
 ### Example Decoded JWT Payload:
+
+```
+{
+  "iss": "auth.telematics.company.com",
+  "aud": "telematics-ingestion",
+
+  "sub": "device:TCU-9A7B8C6D",
+  "vin": "WAQ12345678901",
+  "tenant_id": "fleet-acme",
+  "fw_version": "2.3.1",
+  "vehicle_model": "SUV-X",
+
+  "scopes": [
+    "telemetry:publish",
+    "diagnostics:publish",
+    "trip:publish",
+    "status:publish"
+  ],
+
+  "iat": 1718100000,
+  "exp": 1718103600
+}
+```
+
+### Vehicle Device Token:
+- "sub":"device:TCU-9A7B8C6D",
+- "sub": "device:GATEWAY-ABCD1234"
+- "sub": "device:AAOS-HEADUNIT-001"
+
+### 
+
+# For APIs:
+
+```
+POST /v1/telemetry
+POST /v1/device/status
+POST /v1/diagnostics
+POST /v1/trips/events
+POST /v1/ota/status
+```
+Use:
+
+
+```json
+{
+  "scopes": [
+    "telemetry:publish",
+    "diagnostics:publish",
+    "trip:publish",
+    "status:publish",
+    "ota-status:publish"
+  ]
+}
+
+```
 
 ```json
 {
@@ -250,11 +305,12 @@ The Ingestion API layer performs two fast checks:
 1. **Cryptographic Validation:** It checks the token's signature using the Auth Service's public key (cached in memory via JWKS). If valid, it trusts the `vin` inside the token.
 2. **Scope Verification:** It checks if the requested endpoint matches the granted scopes.
 
----
+-----------------------------------------------
+## Ingestion API services:
+-----------------------------------------
 
-## 4. How the Ingestion API Enforces the Scopes
 
-Your Ingestion API can use a simple interceptor or middleware matrix to map incoming endpoints to required token scopes:
+Your Ingestion API can use a simple interceptor or middleware matrix to map incoming endpoints to required token scopes: Enforceing the Scopes.
 
 | Incoming Endpoint / gRPC Method | Required Scope in Token | Ingestion Action |
 | --- | --- | --- |
@@ -262,22 +318,15 @@ Your Ingestion API can use a simple interceptor or middleware matrix to map inco
 | `POST /v1/diagnostics` | `diagnostics:write` | Extracts `vin` from token $\rightarrow$ Publishes to diagnostics Kafka topic. |
 | `POST /v1/ota/status` | `ota:write` | Extracts `vin` from token $\rightarrow$ Tracks update progress. |
 
-### Why this is highly secure:
-
-The vehicle *cannot lie* about its VIN. Even if a malicious client modifies the data payload to say `VIN: SPY_VIN`, the Ingestion API ignores the payload's claims and strictly uses the `vin` extracted from the cryptographically verified token to populate the Kafka partition key. This prevents cross-vehicle data tampering completely.
-
-
-# Ingestion services:  Vehicle Side APIs for 1M Vehicle Platform:
 
 The ingestion service doesn't care whether the payload contains speed, battery, GPS, CPU, or connectivity data. Its job is simply:
-
 - Authenticate vehicle
 - Validate schema
 - Add metadata (receive timestamp, vehicle ID, etc.)
 - Publish to Kafka
 - Return 200 Accepted
 
-
+v1 API:
 ```
 POST /v1/telemetry
 POST /v1/device/status
@@ -285,6 +334,7 @@ POST /v1/diagnostics
 POST /v1/trips/events
 POST /v1/ota/status
 ```
+
 
 ### Vehicle client requests
 ```
@@ -305,25 +355,31 @@ Vehicle client
 ```
 /v1/telemetry
       |
-      +--> vehicle.telemetry.raw 
+      +--> vehicle.telemetry.raw (kafka topic)
 
 /v1/device/status
       |
-      +--> vehicle.device.status
+      +--> vehicle.device.status (kafka topic)
 
 /v1/diagnostics
       |
-      +--> vehicle.diagnostics.raw
+      +--> vehicle.diagnostics.raw (kafka topic)
 
 /v1/trips/events
       |
-      +--> vehicle.trip.events
+      +--> vehicle.trip.events (kafka topic)
 
 /v1/ota/status
       |
-      +--> vehicle.ota.status
+      +--> vehicle.ota.status (kafka topic)
 
 ```
+
+
+### Why this is highly secure:
+
+The vehicle *cannot lie* about its VIN. Even if a malicious client modifies the data payload to say `VIN: SPY_VIN`, the Ingestion API ignores the payload's claims and strictly uses the `vin` extracted from the cryptographically verified token to populate the Kafka partition key. This prevents cross-vehicle data tampering completely.
+
 
 ------------------
 
@@ -339,6 +395,7 @@ depending on requirements.
 
 - __API:__  
 ```
+
 POST /v1/telemetry
 ```
 - __Schema:__
