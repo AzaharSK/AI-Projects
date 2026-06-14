@@ -150,6 +150,20 @@ Dashboards / APIs
 - Data lake integration
 
 
+# Referrance:
+
+
+
+- https://www.w3.org/TR/viss2-core/#server-capabilities
+- https://github.com/COVESA/vehicle_signal_specification/tree/master
+- https://github.com/thatlarrypearson/vehicle-telemetry-system/
+- https://source.android.com/docs/automotive/vhal/system-properties
+- https://android.googlesource.com/platform/hardware/interfaces/+/refs/heads/android16-qpr2-release/automotive/vehicle/aidl/generated_lib/4/cpp/AnnotationsForVehicleProperty.h
+- https://android.googlesource.com/platform//hardware/interfaces/+/afa170792ae6799435ce0e532365d808aa349ef6/automotive/vehicle/aidl/emu_metadata/android.hardware.automotive.vehicle-types-meta.json
+- https://android.googlesource.com/platform//hardware/interfaces/+/6a5da1503331a32cd36759563efc106bf8b278be/automotive/vehicle/aidl/emu_metadata/android.hardware.automotive.vehicle-types-meta.json
+- https://android.googlesource.com/platform//hardware/interfaces/+/4e10251c1d8f6925739fd9d26f347b68c1e5c6e3/automotive/vehicle/aidl/impl/default_config/config/DefaultProperties.json
+
+
 # Telematics Platform Architecture Validation (1M Vehicles)
 
 <img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/15e34207-b81b-44c3-9d69-8a8873de908f" />
