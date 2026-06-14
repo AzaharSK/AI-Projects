@@ -277,6 +277,14 @@ POST /v1/ota/status
 }
 ```
 
+Used for:
+- Create Over-The-Air update campaign
+- Schedule Over-The-Air update campaign
+- Pause Over-The-Air update campaign
+- Cancel Over-The-Air update campaign
+- Send Over-The-Air update commands
+
+
 ## Step-by-Step Authentication & Authorization Process
 
 ### Step 1: The Vehicle Initial Handshake (With Auth Service)
