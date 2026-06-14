@@ -168,6 +168,251 @@ Dashboards / APIs
 
 <img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/15e34207-b81b-44c3-9d69-8a8873de908f" />
 
+
+
+---------------------------------
+
+# Step: Auth services:
+
+Yes, in a production-scale telematics platform (handling 1 million+ vehicles), the **Auth Service should absolutely be a separate microservice**.
+
+The Ingestion API layer must remain as lightweight and stateless as possible. It should not be querying a database to verify credentials on every single gRPC/HTTPS request. Instead, it should offload credential verification to the dedicated Auth Service, which issues a short-lived cryptographically signed token (like a JWT). The Ingestion API then verifies this token locally using public keys.
+
+Here is how you can architect the authentication flow using **VIN** and **Service Scopes**, optimized for a high-performance gRPC/HTTPS infrastructure.
+
+
+
+## Auth Architecture Flow
+
+Instead of authenticating on every telemetry ping, the vehicle performs a handshake with the Auth Service to get a token, then uses that token for all subsequent data ingestion.
+
+```
++---------------+          1. Auth Request (VIN + Secret/Cert)          +--------------+
+|               | ----------------------------------------------------> |              |
+|               | <---------------------------------------------------- |              |
+|    Vehicle    |               2. Issue Token (JWT)                    | Auth Service |
+| (AAOS/Linux)  |                                                       +--------------+
+|               |          3. gRPC/HTTPS Stream (Include JWT)
+|               | --------------------------------------------------+
++---------------+                                                   |
+                                                                    v
+                                                       +------------------------+
+                                                       |  Ingestion API Layer   |
+                                                       | (Validates JWT locally) |
+                                                       +------------------------+
+
+```
+
+### Designing the Token (JWT Payload)
+
+The token issued by the Auth Service should embed the **VIN** (as the subject or a custom claim) and the allowed **scopes** (the services or endpoints the vehicle is authorized to access).
+
+Using a standard JWT format allows your Ingestion API to validate the payload in microseconds without a database lookup.
+
+### Example Decoded JWT Payload:
+
+```json
+{
+  "iss": "auth.telematics.yourcompany.com",
+  "sub": "vin_1234567890ABCDEFG",
+  "iat": 1718100000,
+  "exp": 1718186400,
+  "vin": "1234567890ABCDEFG",
+  "scopes": [
+    "telemetry:write",
+    "diagnostics:write",
+    "ota:read",
+    "ota:write"
+  ]
+}
+
+```
+
+## Step-by-Step Authentication & Authorization Process
+
+### Step 1: The Vehicle Initial Handshake (With Auth Service)
+
+The vehicle agents initiate an authentication request to the **Auth Service** (typically over HTTPS).
+
+* **The Credentials:** Since you aren't using MQTT (which often uses mTLS), you can use **mTLS** at the HTTPS layer, or a secure hardware-stored secret (TPM chip in the vehicle) passing an asymmetric signature.
+* **The Response:** The Auth Service verifies the vehicle identity against your Asset Registry, generates the JWT containing the specific scopes allowed for that vehicle model, signs it with a private key, and returns it to the vehicle.
+
+### Step 2: Local Token Caching at the Edge
+
+The vehicle's `Certificate Manager` or Auth Agent caches this token locally. Because cellular networks drift, the token should have a reasonable lifetime (e.g., 12 to 24 hours) so the vehicle doesn't have to re-authenticate constantly.
+
+### Step 3: Ingestion API Token Verification (Zero DB Calls)
+
+When the vehicle streams data to the Ingestion API via gRPC or HTTPS, it includes the token in the request headers (e.g., `Authorization: Bearer <JWT>` or gRPC metadata).
+
+The Ingestion API layer performs two fast checks:
+
+1. **Cryptographic Validation:** It checks the token's signature using the Auth Service's public key (cached in memory via JWKS). If valid, it trusts the `vin` inside the token.
+2. **Scope Verification:** It checks if the requested endpoint matches the granted scopes.
+
+---
+
+## 4. How the Ingestion API Enforces the Scopes
+
+Your Ingestion API can use a simple interceptor or middleware matrix to map incoming endpoints to required token scopes:
+
+| Incoming Endpoint / gRPC Method | Required Scope in Token | Ingestion Action |
+| --- | --- | --- |
+| `POST /v1/telemetry` | `telemetry:write` | Extracts `vin` from token $\rightarrow$ Sets Kafka Partition Key to `vin` $\rightarrow$ Publishes. |
+| `POST /v1/diagnostics` | `diagnostics:write` | Extracts `vin` from token $\rightarrow$ Publishes to diagnostics Kafka topic. |
+| `POST /v1/ota/status` | `ota:write` | Extracts `vin` from token $\rightarrow$ Tracks update progress. |
+
+### Why this is highly secure:
+
+The vehicle *cannot lie* about its VIN. Even if a malicious client modifies the data payload to say `VIN: SPY_VIN`, the Ingestion API ignores the payload's claims and strictly uses the `vin` extracted from the cryptographically verified token to populate the Kafka partition key. This prevents cross-vehicle data tampering completely.
+
+
+# Ingestion services:  Vehicle Side APIs for 1M Vehicle Platform:
+
+The ingestion service doesn't care whether the payload contains speed, battery, GPS, CPU, or connectivity data. Its job is simply:
+
+- Authenticate vehicle
+- Validate schema
+- Add metadata (receive timestamp, vehicle ID, etc.)
+- Publish to Kafka
+- Return 200 Accepted
+
+
+```
+POST /v1/telemetry
+POST /v1/device/status
+POST /v1/diagnostics
+POST /v1/trips/events
+POST /v1/ota/status
+```
+
+### Vehicle client requests
+```
+Vehicle client 
+   |
+   +--> POST /v1/telemetry
+   |
+   +--> POST /v1/device/status
+   |
+   +--> POST /v1/diagnostics
+   |
+   +--> POST /v1/trips/events
+   |
+   +--> POST /v1/ota/status
+```
+
+### Backend handling  :
+```
+/v1/telemetry
+      |
+      +--> vehicle.telemetry.raw 
+
+/v1/device/status
+      |
+      +--> vehicle.device.status
+
+/v1/diagnostics
+      |
+      +--> vehicle.diagnostics.raw
+
+/v1/trips/events
+      |
+      +--> vehicle.trip.events
+
+/v1/ota/status
+      |
+      +--> vehicle.ota.status
+
+```
+
+------------------
+
+### 1. Periodic Telemetry
+
+- __Sent every:__
+
+- 5 sec
+- 10 sec
+- 30 sec
+
+depending on requirements.
+
+- __API:__  
+```
+POST /v1/telemetry
+```
+- __Schema:__
+```json
+{
+  "vin":"VIN123",
+  "timestamp":1781123456789,
+
+  "vehicleMetrics":{
+    "speed":72,
+    "rpm":2200,
+    "odometer":123456
+  },
+
+  "batteryMetrics":{
+    "soc":81,
+    "voltage":13.8
+  },
+
+  "locationMetrics":{
+    "latitude":12.97,
+    "longitude":77.59
+  }
+}
+```
+- __Backend:__
+```
+POST /v1/telemetry
+          |
+          v
+vehicle.telemetry.raw
+```
+
+
+In a high-performance system designed for 1 million vehicles, these endpoints should **not be separate microservices**. Instead, they should exist as **different route handlers inside a single, unified Ingestion Microservice**.
+
+Here is why this distinction matters for your Kafka architecture, and how the internals actually look.
+
+---
+
+## 1. The Design: One Microservice, Multiple Routes
+
+If you built 5 separate microservices (one for telemetry, one for status, one for diagnostics, etc.), you would introduce massive, unnecessary operational overhead: 5 different codebases to maintain, 5 different deployment pipelines, and significantly higher cloud infrastructure costs (paying for minimal CPU/Memory baselines across dozens of redundant containers).
+
+Instead, you build a single **Telematics Ingestion Service** (written in a high-concurrency language like Go or Java).
+
+```
+                          +-------------------------------+
+                          |   Telematics Ingestion Service|
+                          |                               |
+POST /v1/telemetry  ----> |  --> Route Handler A -------+ |
+POST /v1/diagnostics ----> |  --> Route Handler B -----+ | |
+POST /v1/trips/events ---> |  --> Route Handler C ---+ | | |
+                          +-------------------------|-|-|-|
+                                                    v v v v
+                                         +-----------------------------------------+
+                                        | Kafka Producers [p1,p2, ..,p6] Clients   |
+                                        +------------------------------------------+
+                                                       |
+         +---------------------------------------------+------------------------------------+
+         |                             |                             |                      |
+         v                             v                             v                      v
+[vehicle.telemetry.raw]    [vehicle.diagnostics.raw]     [vehicle.trip.events]     [vehicle.ota.status]
+
+```
+
+### How it behaves inside the service:
+
+1. The service boots up and creates **one global Kafka Producer client instance** (which handles an internal connection pool to your 6 Kafka brokers).
+2. The service exposes your 5 API paths.
+3. When a request hits `POST /v1/diagnostics`, the diagnostics route handler accepts the payload, reads the `X-Validated-VIN` header, and hands the message over to the shared Kafka Producer with instructions to drop it into the `vehicle.diagnostics.raw` topic.
+
+---
+
 # Scale Targets : For ~1 million vehicles:
 ```sql
 Vehicles                 : 1,000,000
