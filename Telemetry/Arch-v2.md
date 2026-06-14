@@ -250,37 +250,31 @@ POST /v1/diagnostics
 POST /v1/trips/events
 POST /v1/ota/status
 ```
-Use:
 
-
-```json
+```jsin
 {
+  "iss": "auth.telematics.company.com",
+  "aud": "telematics-platform",
+  "sub": "service:ota-manager",
+  "client_id": "ota-manager-service",
+  "service_name": "ota-management",
+  "environment": "production",
+  "region": "ap-south-1",
+
   "scopes": [
-    "telemetry:publish",
-    "diagnostics:publish",
-    "trip:publish",
-    "status:publish",
-    "ota-status:publish"
-  ]
-}
+    "ota:create",
+    "ota:publish",
+    "ota:cancel",
+    "ota:view",
+    "vehicle:command"
+  ],
 
-```
-
-```json
-{
-  "iss": "auth.telematics.yourcompany.com",
-  "sub": "vin_1234567890ABCDEFG",
   "iat": 1718100000,
-  "exp": 1718186400,
-  "vin": "1234567890ABCDEFG",
-  "scopes": [
-    "telemetry:write",
-    "diagnostics:write",
-    "ota:read",
-    "ota:write"
-  ]
-}
+  "nbf": 1718100000,
+  "exp": 1718103600,
 
+  "jti": "5c4fd0f8-b2dc-47de-8f0c-9d4d3a1c6e52"
+}
 ```
 
 ## Step-by-Step Authentication & Authorization Process
