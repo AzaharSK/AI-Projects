@@ -239,6 +239,20 @@ Using a standard JWT format allows your Ingestion API to validate the payload in
 - "sub": "device:GATEWAY-ABCD1234"
 - "sub": "device:AAOS-HEADUNIT-001"
 
+
+
+### Recommended convention
+
+```
+device:<device-id>
+user:<username>
+service:<service-name>
+tool:<tool-name>
+factory:<factory-system>
+```
+
+
+
 ### 
 
 # For APIs:
