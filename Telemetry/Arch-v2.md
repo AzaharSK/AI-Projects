@@ -209,6 +209,16 @@ Availability Zones    3
 Vehicles                 : 1,000,000
 Upload Interval          : 10 sec
 post Messages/sec        : ~100,000 msg/sec
+
+
+Consume Stable ingestion API:
+
+      POST /v1/telemetry — raw Protobuf bytes, 202 on enqueue
+      POST /v1/diagnostics — DTC fault event ingest
+      POST /v1/device/status — compacted topic, latest state
+      POST /v1/trips/events — trip lifecycle event ingest
+      POST /v1/ota/status — firmware update status ingest
+
 +-----------------------------------------------------------+
                            |
                            |
