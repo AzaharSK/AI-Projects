@@ -265,6 +265,9 @@ POST /v1/trips/events
 POST /v1/ota/status
 ```
 
+
+### OTA JWT Token
+
 ```jsin
 {
   "iss": "auth.telematics.company.com",
