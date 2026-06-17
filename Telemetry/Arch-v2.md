@@ -1,5 +1,8 @@
-# Edge-to-Cloud (Connected Vehicle) Telemetry Platform
+- Ref: https://www.udemy.com/course/the-connected-car-mastering-serverless-telematics-on-aws/?src=sac&kw=telematics&couponCode=PMNVD2025
 
+
+# Edge-to-Cloud (Connected Vehicle) Telemetry Platform
+  
 ## Business Context
 
 Modern automotive OEMs, fleet operators, logistics companies, and mobility providers require real-time visibility into vehicle health, location, driver behavior, connectivity status, and operational efficiency across large fleets. Traditional vehicle diagnostics are reactive and often identify issues only after a vehicle reaches a service center.
