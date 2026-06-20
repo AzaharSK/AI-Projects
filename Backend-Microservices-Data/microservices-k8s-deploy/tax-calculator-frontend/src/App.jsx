@@ -6,8 +6,8 @@ function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Backend URL
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  // Backend base path. In Kubernetes ingress this is usually "/api".
+  const API_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
   const calculatePrice = async () => {
     if (!amount) return alert("Enter amount");

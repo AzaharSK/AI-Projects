@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-ingress
+  annotations:
+    # Keep HTTP enabled for local Minikube usage.
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Enable regex paths for nginx ingress.
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # Strip /api prefix before forwarding to service-a.
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # Regex route for API calls to service-a via /api/(.*).
+          - path: /api/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: service-a
+                port:
+                  number: 3000
+          # Regex catch-all route for frontend.
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

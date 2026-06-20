@@ -1,6 +1,6 @@
 ---
 # service-a — price + tax aggregator
-# Exposed via NodePort 30000 so the browser (frontend) can reach it directly.
+# Exposed internally via ClusterIP. Ingress routes /api/(.*) here.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -56,11 +56,10 @@ kind: Service
 metadata:
   name: service-a
 spec:
-  # NodePort — accessible from outside the cluster at http://<NODE_IP>:30000
-  type: NodePort
+  # ClusterIP — reachable internally and through ingress.
+  type: ClusterIP
   selector:
     app: service-a
   ports:
     - port: 3000
       targetPort: 3000
-      nodePort: 30000

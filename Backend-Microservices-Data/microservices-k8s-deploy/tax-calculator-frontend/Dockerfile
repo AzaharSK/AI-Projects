@@ -6,9 +6,9 @@ FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
 # VITE_API_URL is baked into the JS bundle at build time.
-# Override at build time:  docker build --build-arg VITE_API_URL=http://<NODE_IP>:30000 .
-# In K8s the NodePort for service-a is 30000 by default.
-ARG VITE_API_URL=http://localhost:30000
+# Override at build time:  docker build --build-arg VITE_API_URL=/api .
+# Default /api works with ingress path routing to service-a.
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 COPY package*.json ./
