@@ -454,3 +454,9 @@ kubectl rollout status deployment/frontend
 kubectl get pods
 kubectl get svc frontend
 ```
+
+
+
+
+
+
