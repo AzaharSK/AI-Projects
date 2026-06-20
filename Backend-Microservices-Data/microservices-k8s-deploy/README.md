@@ -350,16 +350,42 @@ minikube service frontend --url
 curl "http://$(minikube ip):30000/price?amount=100&country=IN"
 ```
 
-Example response:
+### Example response:
 
 ```json
-{"service":"A","amount":100.0,"tax":18.0,"total":118.0,"container":"service-a-556ccd9bbc-fqg9r","service_b_container":"service-b-5b9b9c9855-67k76"}
+{
+  "service":"A",
+  "amount":100.0,
+  "tax":18.0,"total":118.0,
+  "container":"service-a-556ccd9bbc-fqg9r",
+  "service_b_container":"service-b-5b9b9c9855-67k76"
+}
+```
+
+### check which container runiing/giving responses: 
+
+- `"container":"service-a-556ccd9bbc-fqg9r"`
+- `"service_b_container":"service-b-5b9b9c9855-67k76"`
+
+```bash
+$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+frontend-58b487d4b8-sh9sw    1/1     Running   0          7h43m
+frontend-58b487d4b8-xkkn4    1/1     Running   0          7h43m
+
+service-a-556ccd9bbc-9vlfk   1/1     Running   0          7h43m
+
+service-a-556ccd9bbc-fqg9r   1/1     Running   0          7h43m
+service-b-5b9b9c9855-5qw29   1/1     Running   0          7h43m
+
+service-b-5b9b9c9855-67k76   1/1     Running   0          7h43m
 ```
 
 Browser URL:
 - Frontend: `http://$(minikube ip):30001`
 
 <img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
+
 
 ## Debugging
 
