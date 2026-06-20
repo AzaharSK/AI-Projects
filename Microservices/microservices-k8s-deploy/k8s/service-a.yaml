@@ -1,0 +1,66 @@
+---
+# service-a — price + tax aggregator
+# Exposed via NodePort 30000 so the browser (frontend) can reach it directly.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+  labels:
+    app: service-a
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+        - name: service-a
+          image: service-a:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            # K8s DNS resolves "service-b" to the ClusterIP service above
+            - name: TAX_SERVICE_URL
+              value: "http://service-b:4000"
+            # Allow all origins. In production restrict to your frontend domain.
+            - name: FRONTEND_URL
+              value: "*"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /price?amount=100&country=IN
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /price?amount=100&country=IN
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+spec:
+  # NodePort — accessible from outside the cluster at http://<NODE_IP>:30000
+  type: NodePort
+  selector:
+    app: service-a
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30000

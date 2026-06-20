@@ -1,0 +1,68 @@
+---
+# tax-calculator-frontend — React/Vite app served by Nginx
+#
+# IMPORTANT — VITE_API_URL is baked into the JS bundle at image build time.
+# Rebuild the image with the correct NODE_IP before deploying:
+#
+#   docker build \
+#     --build-arg VITE_API_URL=http://<NODE_IP>:30000 \
+#     -t tax-calculator-frontend:latest \
+#     ./tax-calculator-frontend
+#
+# With minikube you can get the node IP with:  minikube ip
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: tax-calculator-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  # NodePort — accessible from outside the cluster at http://<NODE_IP>:30001
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30001

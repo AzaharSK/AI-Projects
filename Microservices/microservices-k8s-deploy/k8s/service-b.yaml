@@ -1,0 +1,61 @@
+---
+# service-b — internal tax lookup service
+# Accessible only within the cluster (ClusterIP). service-a calls it via
+# http://service-b:4000 using Kubernetes DNS.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-b
+  labels:
+    app: service-b
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: service-b
+  template:
+    metadata:
+      labels:
+        app: service-b
+    spec:
+      containers:
+        - name: service-b
+          image: service-b:latest
+          # Use IfNotPresent so local images built with `docker build` are used.
+          # Change to Always when pulling from a remote registry.
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /tax?country=IN
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /tax?country=IN
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b
+spec:
+  # ClusterIP — not reachable from outside the cluster
+  type: ClusterIP
+  selector:
+    app: service-b
+  ports:
+    - port: 4000
+      targetPort: 4000
