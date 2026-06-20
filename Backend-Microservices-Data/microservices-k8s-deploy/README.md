@@ -281,7 +281,7 @@ service/service-b created
 ### 5) Verify pods and services
 
 ```bash
-kubectl get deployments,svc,pods
+$ kubectl get deployments,svc,pods
 ```
 
 Example output:
@@ -365,10 +365,13 @@ curl "http://$(minikube ip):30000/price?amount=100&country=IN"
 }
 ```
 
+<img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
+
 ### check which container runiing/giving responses: 
 
 - `"container":"service-a-556ccd9bbc-fqg9r"`
 - `"service_b_container":"service-b-5b9b9c9855-67k76"`
+
 
 ```bash
 $ kubectl get pods
@@ -388,9 +391,6 @@ Browser URL:
 - Frontend: `http://$(minikube ip):30001`
 
 <img width="1761" height="880" alt="image" src="https://github.com/user-attachments/assets/9f757c48-0700-4261-89ff-20058b40618f" />
-
-<img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
-
 
 ## Debugging
 
@@ -447,3 +447,10 @@ kubectl rollout restart deployment/frontend
 
 - `service-b` is internal only (`ClusterIP`), so test it through service-a or from inside the cluster.
 - These manifests use `imagePullPolicy: IfNotPresent`, which is correct for locally built images loaded into Minikube.
+
+### frontend :
+```bash
+kubectl rollout status deployment/frontend
+kubectl get pods
+kubectl get svc frontend
+```
