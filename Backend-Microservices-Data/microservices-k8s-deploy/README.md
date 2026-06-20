@@ -359,6 +359,8 @@ Example response:
 Browser URL:
 - Frontend: `http://$(minikube ip):30001`
 
+<img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
+
 ## Debugging
 
 ### Inspect pod details
