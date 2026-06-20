@@ -19,6 +19,9 @@ flowchart LR
   A -->|http://service-b:4000/tax| B[service-b\nFastAPI]
 ```
 
+<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/1dc9d919-716f-4d41-a2a9-c07790328cca" />
+
+
 ## Service Communication And Final Output Flow
 
 This is the end-to-end lifecycle of one tax calculation request.
@@ -383,6 +386,8 @@ service-b-5b9b9c9855-67k76   1/1     Running   0          7h43m
 
 Browser URL:
 - Frontend: `http://$(minikube ip):30001`
+
+<img width="1761" height="880" alt="image" src="https://github.com/user-attachments/assets/9f757c48-0700-4261-89ff-20058b40618f" />
 
 <img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
 
