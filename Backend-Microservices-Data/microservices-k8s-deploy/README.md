@@ -342,26 +342,25 @@ Example output:
 
 ```text
 NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/frontend    2/2     2            2           98s
-deployment.apps/service-a   2/2     2            2           98s
-deployment.apps/service-b   2/2     2            2           98s
+deployment.apps/frontend    2/2     2            2           24h
+deployment.apps/service-a   2/2     2            2           24h
+deployment.apps/service-b   2/2     2            2           24h
 
 NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/frontend     ClusterIP   10.106.129.45   <none>        80/TCP     98s
-service/kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    4d22h
-service/service-a    ClusterIP   10.103.59.5     <none>        3000/TCP   98s
-service/service-b    ClusterIP   10.103.52.202   <none>        4000/TCP   98s
+service/frontend     ClusterIP   10.106.129.45   <none>        80/TCP     24h
+service/kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    5d23h
+service/service-a    ClusterIP   10.103.59.5     <none>        3000/TCP   24h
+service/service-b    ClusterIP   10.103.52.202   <none>        4000/TCP   24h
 
-NAME                                              CLASS   HOSTS   ADDRESS   PORTS   AGE
-ingress.networking.k8s.io/microservices-ingress   nginx   *                 80      98s
+NAME                                              CLASS   HOSTS   ADDRESS        PORTS   AGE
+ingress.networking.k8s.io/microservices-ingress   nginx   *       192.168.49.2   80      40m
 
-NAME                             READY   STATUS    RESTARTS   AGE
-pod/frontend-58b487d4b8-sh9sw    1/1     Running   0          98s
-pod/frontend-58b487d4b8-xkkn4    1/1     Running   0          98s
-pod/service-a-556ccd9bbc-9vlfk   1/1     Running   0          98s
-pod/service-a-556ccd9bbc-fqg9r   1/1     Running   0          98s
-pod/service-b-5b9b9c9855-5qw29   1/1     Running   0          98s
-pod/service-b-5b9b9c9855-67k76   1/1     Running   0          98s
+NAME                             READY   STATUS    RESTARTS      AGE
+pod/frontend-d4856fd5c-wk7p6     1/1     Running   0             25m
+pod/frontend-d4856fd5c-xj26j     1/1     Running   0             25m
+pod/service-a-556ccd9bbc-9vlfk   1/1     Running   1 (43m ago)   24h
+pod/service-a-556ccd9bbc-fqg9r   1/1     Running   1 (43m ago)   24h
+pod/service-b-5b9b9c9855-5qw29   1/1     Running   1 (43m ago)   24h
 ```
 
 ### 6) Watch pod readiness live
