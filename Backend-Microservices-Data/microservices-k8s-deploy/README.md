@@ -276,16 +276,6 @@ docker build --no-cache \
 minikube version
 minikube start
 minikube status
-minikube addons enable ingress
-kubectl get pods -n ingress-nginx
-```
-
-Check if ingress addon is enabled:
-
-```bash
-$ minikube addons list | grep ingress
-│ ingress                     │ minikube │ enabled ✅ │ Kubernetes                             │
-│ ingress-dns                 │ minikube │ disabled   │ minikube                               │
 ```
 
 Expected status:
@@ -297,6 +287,23 @@ kubelet: Running
 apiserver: Running
 kubeconfig: Configured
 docker-env: in-use
+```
+
+__Enable ingress__
+
+```bash
+
+minikube addons enable ingress
+kubectl get pods -n ingress-nginx
+```
+
+__Check if ingress addon is enabled:__
+
+
+```bash
+$ minikube addons list | grep ingress
+│ ingress                     │ minikube │ enabled ✅ │ Kubernetes                             │
+│ ingress-dns                 │ minikube │ disabled   │ minikube                               │
 ```
 
 ### 3) Load all images into Minikube
