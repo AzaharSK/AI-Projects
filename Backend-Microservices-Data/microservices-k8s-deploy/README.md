@@ -1,33 +1,164 @@
-# Microservices Kubernetes Deployment (Minikube + Ingress)
+# Microservices Kubernetes Deployment (Minikube)
 
-This project deploys three services and one ingress resource on Kubernetes:
-- `service-b`: internal tax lookup API
-- `service-a`: public price API that calls `service-b`
-- `tax-calculator-frontend`: React/Vite frontend served by Nginx
-- `microservices-ingress`: ingress routes for frontend and API
+This project deploys three services on Kubernetes:
+- service-b: internal tax lookup API
+- service-a: public price API that calls service-b
+- tax-calculator-frontend: React/Vite frontend served by Nginx
+
+Ingress is used as the public entry point:
+- Public ingress URL listens on HTTP port `80`
+- /api/(.*) routes to service-a port `3000` and rewrites to /$1
+- /(.*) routes to frontend service port `80`
 
 ## Architecture
 
-Ingress routing:
-- `/api/(.*)` -> `service-a:3000` (rewritten to `/$1`)
-- `/(.*)` -> `frontend:80`
-
 Request flow:
-1. Browser opens frontend via ingress URL (`http://<MINIKUBE_IP>/`).
-2. Frontend calls backend using `/api/price?...`.
-3. Ingress rewrites `/api/price` to `/price` and forwards to `service-a`.
-4. `service-a` calls `service-b` using Kubernetes DNS (`http://service-b:4000`).
+1. Browser opens frontend using ingress URL: `http://<NODE_IP>:80/`.
+2. Frontend calls service-a through ingress path `/api/price` on port `80`.
+3. Ingress rewrites `/api/price` to `/price` and forwards to service-a on port `3000`.
+4. service-a calls service-b using Kubernetes DNS (`http://service-b:4000`).
 
 ```mermaid
 flowchart LR
-  U[Browser] -->|http://MINIKUBE_IP/| I[NGINX Ingress]
-  I -->|/(.*)| F[frontend Service\nClusterIP:80]
-  F -->|frontend files| N[Frontend Pod\nNginx + React]
-  U -->|/api/price| I
-  I -->|rewrite /api/(.*) -> /$1| A[service-a Service\nClusterIP:3000]
-  A --> AP[service-a Pod\nFastAPI]
-  AP -->|http://service-b:4000/tax| B[service-b Service\nClusterIP:4000]
-  B --> BP[service-b Pod\nFastAPI]
+  U[Browser] -->|http://NODE_IP:80/| I[Ingress<br/>NGINX :80]
+  I -->|frontend path /| F[Frontend<br/>Nginx + React]
+  U -->|GET /api/price via :80| I
+  I -->|rewrite /api/* to /price on :3000| A[service-a<br/>FastAPI :3000]
+  A -->|http://service-b:4000/tax| B[service-b<br/>FastAPI]
+```
+
+<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/1dc9d919-716f-4d41-a2a9-c07790328cca" />
+
+## Service Communication And Final Output Flow
+
+This is the end-to-end lifecycle of one tax calculation request.
+
+### Method Calls And Response Returns
+
+1. Frontend method call:
+   - User clicks Calculate in UI.
+   - React method `calculatePrice()` in `tax-calculator-frontend/src/App.jsx` runs.
+   - It calls:
+     - `fetch("${API_URL}/price?amount=${amount}&country=${country}")`
+   - In ingress mode, `API_URL` should be `/api`.
+   - It parses response:
+     - `const data = await res.json()`
+   - It stores final response object:
+     - `setResult(data)`
+
+2. service-a method call:
+   - FastAPI route `price(amount: float, country: str)` in `services/service-a/main.py` runs.
+   - It normalizes country:
+     - `country = country.upper()`
+   - It calls service-b:
+     - `client.get(f"{TAX_SERVICE_URL}/tax", params={"country": country})`
+   - It reads tax response JSON and computes:
+     - `tax = float(j.get("tax", 0))`
+     - `total = amount + tax`
+   - It returns final JSON:
+     - `{ service, amount, tax, total, container, service_b_container }`
+
+3. service-b method call:
+   - FastAPI route `tax(country: str)` in `services/service-b/main.py` runs.
+   - It normalizes country and resolves tax from `TAX_TABLE`.
+   - It returns JSON:
+     - `{ service, country, tax, container }`
+
+### UML Sequence Diagram (Request To Final Output)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User
+  participant Browser as Browser UI (React)
+  participant Ingress as NGINX Ingress (HTTP 80)
+  participant FrontendSvc as frontend Service (ClusterIP 80)
+  participant FrontendPod as frontend Pod (Nginx)
+  participant ServiceASvc as service-a Service (ClusterIP 3000)
+  participant ServiceAPod as service-a Pod (FastAPI)
+  participant ServiceBSvc as service-b Service (ClusterIP 4000)
+  participant ServiceBPod as service-b Pod (FastAPI)
+
+  User->>Browser: Enter amount and country, click Calculate
+  Browser->>Browser: calculatePrice()
+  Browser->>Ingress: GET http://NODE_IP:80/api/price?amount=100&country=IN
+  Ingress->>ServiceASvc: Rewrite /api/* to /price
+  ServiceASvc->>ServiceAPod: Route request
+  ServiceAPod->>ServiceBSvc: GET /tax?country=IN
+  ServiceBSvc->>ServiceBPod: Route request
+  ServiceBPod->>ServiceBPod: tax(country) + TAX_TABLE lookup
+  ServiceBPod-->>ServiceAPod: TaxResponse {service: B, country: IN, tax: 18}
+  ServiceAPod->>ServiceAPod: total = amount + tax
+  ServiceAPod-->>ServiceASvc: PriceResponse {service: A, amount: 100, tax: 18, total: 118}
+  ServiceASvc-->>Ingress: JSON response
+  Ingress-->>Browser: JSON response
+  Browser->>Browser: setResult(response)
+  Browser-->>User: Render amount, tax, total
+```
+
+1. User opens the frontend URL: `http://<NODE_IP>:80/`.
+2. Kubernetes ingress routes `/(.*)` to `frontend` service on port `80`.
+3. Nginx serves the built React app.
+4. In the browser, the app sends an API call to service-a using `VITE_API_URL=/api`:
+  - `GET http://<NODE_IP>:80/api/price?amount=<amount>&country=<country>`
+5. Ingress matches `/api/(.*)` and rewrites path to `/$1`.
+6. Kubernetes `service-a` ClusterIP service forwards request to one service-a pod (`3000`).
+7. service-a receives `amount` and `country`, then calls service-b through cluster DNS:
+   - `GET http://service-b:4000/tax?country=<country>`
+8. Kubernetes `service-b` ClusterIP service forwards to one service-b pod (`4000`).
+9. service-b looks up tax from its in-memory table and returns JSON (for example, `IN -> 18`).
+10. service-a calculates final total:
+
+$$
+total = amount + tax
+$$
+
+11. service-a returns the final payload to the browser, including both container names for traceability.
+12. Frontend renders amount, tax, and total as the final output seen by the user.
+
+### Worked Example
+
+Request from frontend to ingress:
+
+```http
+GET /api/price?amount=100&country=IN
+# Host: <NODE_IP>:80
+```
+
+Internal forwarded request from ingress to service-a (after rewrite):
+
+```http
+GET /price?amount=100&country=IN
+```
+
+Internal request from service-a to service-b:
+
+```http
+GET /tax?country=IN
+```
+
+service-b response (example):
+
+```json
+{
+  "service": "B",
+  "country": "IN",
+  "tax": 18,
+  "container": "service-b-5b9b9c9855-67k76"
+}
+```
+
+service-a final response (example):
+
+```json
+{
+  "service": "A",
+  "amount": 100.0,
+  "tax": 18.0,
+  "total": 118.0,
+  "container": "service-a-556ccd9bbc-fqg9r",
+  "service_b_container": "service-b-5b9b9c9855-67k76"
+}
 ```
 
 ## Repository Structure
@@ -44,35 +175,75 @@ services/
 tax-calculator-frontend/
 ```
 
-## Service Details
+## Service And Config Details
 
 ### service-b (internal tax service)
 - Code: `services/service-b/main.py`
 - Endpoint: `GET /tax?country=<CODE>`
 - Port: `4000`
-- Kubernetes service type: `ClusterIP`
+- Kubernetes service type: `ClusterIP` (internal only)
+- Tax table:
+  - `IN -> 18`
+  - `US -> 8`
+  - `EU -> 20`
+  - default -> `10`
+- Deployment config (`k8s/service-b.yaml`):
+  - Replicas: `2`
+  - Resources:
+    - Requests: `cpu 100m`, `memory 64Mi`
+    - Limits: `cpu 250m`, `memory 128Mi`
+  - Probes:
+    - Readiness: `GET /tax?country=IN`
+    - Liveness: `GET /tax?country=IN`
 
 ### service-a (price aggregator)
 - Code: `services/service-a/main.py`
 - Endpoint: `GET /price?amount=<number>&country=<CODE>`
 - Port: `3000`
-- Kubernetes service type: `ClusterIP`
+- Kubernetes service type: `ClusterIP` (exposed publicly via ingress)
 - Environment variables:
   - `TAX_SERVICE_URL=http://service-b:4000`
   - `FRONTEND_URL=*`
+- Behavior:
+  - Calls `service-b` for tax.
+  - Returns amount, tax, total, and container names for both services.
+- Deployment config (`k8s/service-a.yaml`):
+  - Replicas: `2`
+  - Resources:
+    - Requests: `cpu 100m`, `memory 64Mi`
+    - Limits: `cpu 250m`, `memory 128Mi`
+  - Probes:
+    - Readiness: `GET /price?amount=100&country=IN`
+    - Liveness: `GET /price?amount=100&country=IN`
 
-### frontend (React/Vite + Nginx)
+### Frontend (React/Vite + Nginx)
 - App source: `tax-calculator-frontend/`
 - Build arg: `VITE_API_URL`
-- Recommended value for ingress mode: `/api`
 - Runtime: Nginx on port `80`
-- Kubernetes service type: `ClusterIP`
+- Kubernetes service type: `ClusterIP` (exposed publicly via ingress)
+- Important:
+  - `VITE_API_URL` is baked into the bundle at image build time.
+  - For ingress, build with `VITE_API_URL=/api`.
+- Deployment config (`k8s/frontend.yaml`):
+  - Replicas: `2`
+  - Resources:
+    - Requests: `cpu 50m`, `memory 32Mi`
+    - Limits: `cpu 100m`, `memory 64Mi`
+  - Probes:
+    - Readiness: `GET /`
+    - Liveness: `GET /`
 
-### ingress (public entry point)
-- File: `k8s/ingress.yaml`
+### Ingress (public entry)
+- Config: `k8s/ingress.yaml`
 - Ingress class: `nginx`
-- API path: `/api/(.*)` (regex)
-- Frontend path: `/(.*)` (regex catch-all)
+- Public entry port: `80` (HTTP)
+- API path: `/api/(.*)`
+- Frontend path: `/(.*)`
+- Backend route ports:
+  - `/api/(.*)` -> service-a port `3000`
+  - `/(.*)` -> frontend service port `80`
+- Rewrite annotation:
+  - `nginx.ingress.kubernetes.io/rewrite-target: /$1`
 
 ## Prerequisites
 
@@ -82,17 +253,7 @@ tax-calculator-frontend/
 
 ## Deployment Steps
 
-### 1) Start Minikube and enable ingress
-
-```bash
-minikube start
-minikube addons enable ingress
-kubectl get pods -n ingress-nginx
-```
-
-Wait until ingress controller pods are `Running`.
-
-### 2) Build Docker images
+### 1) Build backend docker containers
 
 ```bash
 cd microservices-k8s-deploy
@@ -105,12 +266,41 @@ docker build --no-cache \
   tax-calculator-frontend
 ```
 
-### 3) Load images into Minikube
+### 2) Check Minikube is running and enable ingress
+
+```bash
+minikube version
+minikube start
+minikube status
+minikube addons enable ingress
+kubectl get pods -n ingress-nginx
+```
+
+Check if ingress addon is enabled:
+
+```bash
+$ minikube addons list | grep ingress
+│ ingress                     │ minikube │ enabled ✅ │ Kubernetes                             │
+│ ingress-dns                 │ minikube │ disabled   │ minikube                               │
+```
+
+Expected status:
+
+```text
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+docker-env: in-use
+```
+
+### 3) Load all images into Minikube
 
 ```bash
 minikube image load service-b:latest
 minikube image load service-a:latest
-minikube image load tax-calculator-frontend:latest
+minikube image load --overwrite=true tax-calculator-frontend:latest
 ```
 
 ### 4) Apply Kubernetes manifests
@@ -119,111 +309,201 @@ minikube image load tax-calculator-frontend:latest
 kubectl apply -f k8s/
 ```
 
-Expected resources include:
-- `deployment/frontend`
-- `deployment/service-a`
-- `deployment/service-b`
-- `service/frontend`
-- `service/service-a`
-- `service/service-b`
-- `ingress/networking.k8s.io/microservices-ingress`
+Expected output:
 
-### 5) Verify deployments, services, ingress, and pods
+```text
+deployment.apps/frontend created
+service/frontend created
+deployment.apps/service-a created
+service/service-a created
+deployment.apps/service-b created
+service/service-b created
+ingress.networking.k8s.io/microservices-ingress created
+```
+
+### 5) Verify pods, services, and ingress
 
 ```bash
 kubectl get deployments,svc,ingress,pods
 ```
 
-You should see:
-- all deployments available
-- all pods ready
-- services as `ClusterIP`
-- ingress resource present
+Example output:
 
-### 6) Access the frontend
+```text
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/frontend    2/2     2            2           98s
+deployment.apps/service-a   2/2     2            2           98s
+deployment.apps/service-b   2/2     2            2           98s
 
-```bash
-echo "http://$(minikube ip)/"
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/frontend     ClusterIP   10.106.129.45   <none>        80/TCP     98s
+service/kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    4d22h
+service/service-a    ClusterIP   10.103.59.5     <none>        3000/TCP   98s
+service/service-b    ClusterIP   10.103.52.202   <none>        4000/TCP   98s
+
+NAME                                              CLASS   HOSTS   ADDRESS   PORTS   AGE
+ingress.networking.k8s.io/microservices-ingress   nginx   *                 80      98s
+
+NAME                             READY   STATUS    RESTARTS   AGE
+pod/frontend-58b487d4b8-sh9sw    1/1     Running   0          98s
+pod/frontend-58b487d4b8-xkkn4    1/1     Running   0          98s
+pod/service-a-556ccd9bbc-9vlfk   1/1     Running   0          98s
+pod/service-a-556ccd9bbc-fqg9r   1/1     Running   0          98s
+pod/service-b-5b9b9c9855-5qw29   1/1     Running   0          98s
+pod/service-b-5b9b9c9855-67k76   1/1     Running   0          98s
 ```
 
-Open that URL in your browser.
-
-## Smoke Tests
-
-### API via ingress
+### 6) Watch pod readiness live
 
 ```bash
-curl "http://$(minikube ip)/api/price?amount=100&country=IN"
+kubectl get pods -w
 ```
 
-Example response:
+Example output:
+
+```text
+NAME                         READY   STATUS    RESTARTS   AGE
+frontend-58b487d4b8-sh9sw    1/1     Running   0          78s
+frontend-58b487d4b8-xkkn4    1/1     Running   0          78s
+service-a-556ccd9bbc-9vlfk   1/1     Running   0          78s
+service-a-556ccd9bbc-fqg9r   1/1     Running   0          78s
+service-b-5b9b9c9855-5qw29   1/1     Running   0          78s
+service-b-5b9b9c9855-67k76   1/1     Running   0          78s
+```
+
+### 7) Rollout status
+
+```bash
+kubectl rollout status deployment/service-b
+kubectl rollout status deployment/service-a
+kubectl rollout status deployment/frontend
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx
+```
+
+Expected output:
+
+```text
+deployment "service-b" successfully rolled out
+deployment "service-a" successfully rolled out
+deployment "frontend" successfully rolled out
+deployment "ingress-nginx-controller" successfully rolled out
+```
+
+## Smoke Test
+
+```bash
+minikube ip
+# Example: 192.168.49.2
+
+curl "http://$(minikube ip):80/api/price?amount=100&country=IN"
+```
+
+### Example response:
 
 ```json
 {
-  "service": "A",
-  "amount": 100.0,
-  "tax": 18.0,
-  "total": 118.0,
-  "container": "service-a-xxxxxxxxxx-xxxxx",
-  "service_b_container": "service-b-xxxxxxxxxx-xxxxx"
+  "service":"A",
+  "amount":100.0,
+  "tax":18.0,"total":118.0,
+  "container":"service-a-556ccd9bbc-fqg9r",
+  "service_b_container":"service-b-5b9b9c9855-67k76"
 }
 ```
 
-### Direct tax service check from inside cluster (optional)
+<img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
+
+### check which container runiing/giving responses:
+
+- `"container":"service-a-556ccd9bbc-fqg9r"`
+- `"service_b_container":"service-b-5b9b9c9855-67k76"`
 
 ```bash
-kubectl run curl-test --rm -it --image=curlimages/curl -- \
-  curl "http://service-b:4000/tax?country=IN"
+$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+frontend-58b487d4b8-sh9sw    1/1     Running   0          7h43m
+frontend-58b487d4b8-xkkn4    1/1     Running   0          7h43m
+
+service-a-556ccd9bbc-9vlfk   1/1     Running   0          7h43m
+service-a-556ccd9bbc-fqg9r   1/1     Running   0          7h43m
+service-b-5b9b9c9855-5qw29   1/1     Running   0          7h43m
+service-b-5b9b9c9855-67k76   1/1     Running   0          7h43m
 ```
 
-## Request Lifecycle
+Browser URL:
+- Frontend: `http://$(minikube ip):80/`
+- API: `http://$(minikube ip):80/api/price?amount=100&country=IN`
 
-1. User submits amount and country in frontend.
-2. Frontend calls `/api/price?amount=<amount>&country=<country>`.
-3. Ingress matches `/api/(.*)` and rewrites path to `/$1`.
-4. `service-a` receives `/price`, calls `service-b` at `/tax`.
-5. `service-a` computes total:
+<img width="1761" height="880" alt="image" src="https://github.com/user-attachments/assets/9f757c48-0700-4261-89ff-20058b40618f" />
 
-$$
-total = amount + tax
-$$
+## Debugging
 
-6. Result is returned to frontend and rendered in UI.
+### Inspect pod details
 
-## Troubleshooting
+```bash
+kubectl describe pod POD_NAME
+```
 
-### Ingress has no address or requests fail
+### Check logs
+
+```bash
+kubectl logs POD_NAME --tail=100
+kubectl logs POD_NAME --previous --tail=100
+```
+
+### Check ingress controller and ingress
 
 ```bash
 kubectl get pods -n ingress-nginx
 kubectl describe ingress microservices-ingress
 ```
 
-If controller pods are not ready, wait a bit and retry.
+### Check recent cluster events
 
-### Frontend calls wrong backend URL
+```bash
+kubectl get events --sort-by=.metadata.creationTimestamp
+```
 
-If the frontend image was built with an old `VITE_API_URL`, rebuild with:
+### Example: describe one service-a pod
+
+```bash
+kubectl describe pod service-a-556ccd9bbc-9vlfk
+```
+
+Sample important sections:
+- Image: `service-a:latest`
+- Env:
+  - `TAX_SERVICE_URL=http://service-b:4000`
+  - `FRONTEND_URL=*`
+- Probes:
+  - Readiness: `GET /price?amount=100&country=IN`
+  - Liveness: `GET /price?amount=100&country=IN`
+- Example transient warning during startup:
+  - `Readiness probe failed: HTTP probe failed with statuscode: 500`
+
+A short readiness probe warning can be normal during startup if the app depends on another service that is not ready yet.
+
+## Common Notes
+
+- If frontend cannot call service-a in ingress mode, rebuild frontend image with `VITE_API_URL=/api`:
 
 ```bash
 docker build --no-cache \
   --build-arg VITE_API_URL=/api \
   -t tax-calculator-frontend:latest \
   tax-calculator-frontend
-minikube image load tax-calculator-frontend:latest
+minikube image load --overwrite=true tax-calculator-frontend:latest
 kubectl rollout restart deployment/frontend
 ```
 
-### Check logs
+- `service-b` is internal only (`ClusterIP`), so test it through service-a or from inside the cluster.
+- Ingress rewrites `/api/(.*)` to `/$1` before forwarding to service-a.
+- These manifests use `imagePullPolicy: IfNotPresent`, which is correct for locally built images loaded into Minikube.
+
+### frontend:
 
 ```bash
-kubectl logs deployment/service-a --tail=100
-kubectl logs deployment/service-b --tail=100
-kubectl logs deployment/frontend --tail=100
+kubectl rollout status deployment/frontend
+kubectl get pods
+kubectl get svc frontend
+kubectl get ingress
 ```
-
-## Notes
-
-- `service-b` remains internal (`ClusterIP`) and is not exposed publicly.
-- Ingress annotation `nginx.ingress.kubernetes.io/rewrite-target: /$1` removes `/api` before forwarding to `service-a`.
-- The frontend default API base path is now `/api`, matching ingress routing.
