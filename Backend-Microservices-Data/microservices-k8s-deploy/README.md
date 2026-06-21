@@ -116,6 +116,10 @@ $$
 11. service-a returns the final payload to the browser, including both container names for traceability.
 12. Frontend renders amount, tax, and total as the final output seen by the user.
 
+
+<img width="1616" height="941" alt="image" src="https://github.com/user-attachments/assets/eb5ab689-6724-44aa-aeaf-9496cb56172f" />
+
+
 ### Worked Example
 
 Request from frontend to ingress:
@@ -410,7 +414,7 @@ curl "http://$(minikube ip):80/api/price?amount=100&country=IN"
 }
 ```
 
-<img width="1603" height="252" alt="image" src="https://github.com/user-attachments/assets/ce722db7-acc7-40bf-af5c-b3ea133bfd41" />
+<img width="1295" height="246" alt="image" src="https://github.com/user-attachments/assets/ef023ed5-2b6d-4493-965e-87c9a893349c" />
 
 ### check which container runiing/giving responses:
 
@@ -433,8 +437,11 @@ Browser URL:
 - Frontend: `http://$(minikube ip):80/`
 - API: `http://$(minikube ip):80/api/price?amount=100&country=IN`
 
-<img width="1761" height="880" alt="image" src="https://github.com/user-attachments/assets/9f757c48-0700-4261-89ff-20058b40618f" />
+### Load frontend on browser:
 
+<img width="1616" height="941" alt="image" src="https://github.com/user-attachments/assets/efa1b31c-ae0f-45c9-9f2f-f686a6efa588" />
+
+---------------------------------------------------------------------------------------------------------------------------------------
 ## Debugging
 
 ### Inspect pod details
