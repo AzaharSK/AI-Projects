@@ -520,3 +520,27 @@ kubectl get pods
 kubectl get svc frontend
 kubectl get ingress
 ```
+### Fixed ISSUE: Frontend Not connecting to Backend:
+
+<img width="1370" height="766" alt="image" src="https://github.com/user-attachments/assets/46e6c596-5a1f-4857-82b3-45b263b7127f" />
+
+The frontend pods were still serving an old JS bundle that hardcoded http://192.168.49.2:30000.
+That bypassed ingress and caused the Calculate request to fail in browser.
+What I fixed:
+
+Verified the running bundle content inside frontend pods.
+Rebuilt frontend with VITE_API_URL=/api.
+Imported that rebuilt image into Minikube as a tar image (so Minikube stopped using the stale frontend image).
+Restarted frontend deployment and waited for rollout.
+Re-verified live bundle now contains /api (and no hardcoded 30000 URL).
+Re-ran end-to-end API test through ingress successfully.
+Current verified state:
+
+Frontend pods serve new asset: assets/index-CeynXh4w.js
+Bundle strings show /api and /price
+API through ingress works: http://$(minikube ip)/api/price?amount=100&country=IN returns valid JSON
+What you should do now:
+
+In browser, hard refresh the page (Ctrl+Shift+R) or open a new incognito tab.
+Open http://192.168.49.2
+Click Calculate again.
