@@ -463,4 +463,6 @@ This design follows the **single responsibility principle**:
 
 This separation makes the platform easier to scale, test, and evolve as new models, policies, and enterprise requirements are introduced.
 
+- https://www.linkedin.com/posts/opa-raia-cloudops-share-7376466158108999680-TmFk/
+
 <img width="1078" height="630" alt="image" src="https://github.com/user-attachments/assets/57e0a86e-bb11-4503-877c-674f58346f22" />
